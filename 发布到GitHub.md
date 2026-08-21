@@ -14,9 +14,9 @@
 
 ```text
 https://hopehou666.github.io/AI_zuoye/
-https://hopehou666.github.io/AI_zuoye/01-智能体/agent.html
-https://hopehou666.github.io/AI_zuoye/02-多维表/table.html
-https://hopehou666.github.io/AI_zuoye/03-交互网页/index.html
+https://hopehou666.github.io/AI_zuoye/01-agent/agent.html
+https://hopehou666.github.io/AI_zuoye/02-table/table.html
+https://hopehou666.github.io/AI_zuoye/03-web/index.html
 ```
 
 ## 以后改了文件怎么更新

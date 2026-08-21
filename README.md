@@ -8,9 +8,9 @@
 
 | 路径 | 目录 | 交付物 | 使用者 |
 |------|------|--------|--------|
-| 路径1 智能体 | [01-智能体](./01-智能体/) | Agent 链接 + 提示词 | 学生自助诊断 |
-| 路径2 多维表 | [02-多维表](./02-多维表/) | 多维表（AI 字段）链接 | 教师班级学情管理 |
-| 路径3 交互网页 | [03-交互网页](./03-交互网页/) | `index.html` | 课堂/课后即时练习 |
+| 路径1 智能体 | [01-agent](./01-agent/) | Agent 链接 + 提示词 | 学生自助诊断 |
+| 路径2 多维表 | [02-table](./02-table/) | 多维表（AI 字段）链接 | 教师班级学情管理 |
+| 路径3 交互网页 | [03-web](./03-web/) | `index.html` | 课堂/课后即时练习 |
 
 ## 与评价指标对齐
 
@@ -25,9 +25,9 @@
 | 入口 | 链接 |
 |------|------|
 | 总导航 | https://hopehou666.github.io/AI_zuoye/ |
-| 路径1 智能体 | https://hopehou666.github.io/AI_zuoye/01-智能体/agent.html |
-| 路径2 多维表 | https://hopehou666.github.io/AI_zuoye/02-多维表/table.html |
-| 路径3 交互网页 | https://hopehou666.github.io/AI_zuoye/03-交互网页/index.html |
+| 路径1 智能体 | https://hopehou666.github.io/AI_zuoye/01-agent/agent.html |
+| 路径2 多维表 | https://hopehou666.github.io/AI_zuoye/02-table/table.html |
+| 路径3 交互网页 | https://hopehou666.github.io/AI_zuoye/03-web/index.html |
 
 代码仓库：https://github.com/hopehou666/AI_zuoye
 
