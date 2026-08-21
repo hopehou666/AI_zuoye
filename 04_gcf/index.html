@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小学数学最大公因数计算器</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>小学数学最大公因数计算器</h1>
+            <p class="subtitle">支持列举法和更相减损法两种算法</p>
+        </header>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="num1">第一个数:</label>
+                <input type="number" id="num1" placeholder="请输入正整数" min="1">
+            </div>
+            <div class="input-group">
+                <label for="num2">第二个数:</label>
+                <input type="number" id="num2" placeholder="请输入正整数" min="1">
+            </div>
+            <div class="button-group">
+                <button id="calculateBtn" class="btn btn-primary">计算</button>
+                <button id="quickTestBtn" class="btn btn-info">快速测试</button>
+                <button id="batchTestBtn" class="btn btn-secondary">全面测试</button>
+                <button id="clearBtn" class="btn btn-danger">清空</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div id="progressContainer" class="progress-container" style="display: none;">
+                <div class="progress-label">全面测试进度</div>
+                <div class="progress-bar">
+                    <div id="progressBar" class="progress-fill"></div>
+                </div>
+                <div id="progressText" class="progress-text">0%</div>
+            </div>
+            <div id="results" class="results-content"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

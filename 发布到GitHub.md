@@ -17,6 +17,7 @@ https://hopehou666.github.io/AI_zuoye/
 https://hopehou666.github.io/AI_zuoye/01-agent/agent.html
 https://hopehou666.github.io/AI_zuoye/02-table/table.html
 https://hopehou666.github.io/AI_zuoye/03_web/index.html
+https://hopehou666.github.io/AI_zuoye/04_gcf/index.html
 ```
 
 ## 以后改了文件怎么更新
