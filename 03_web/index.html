@@ -138,6 +138,13 @@
       background: #eef8f6; border-radius: 0 12px 12px 0; color: var(--muted);
       line-height: 1.65; font-size: 0.95rem;
     }
+    .hint-box a, .home-link {
+      color: var(--accent-deep); font-weight: 700;
+    }
+    .home-link {
+      display: inline-block; margin-bottom: 10px; font-size: 0.9rem; text-decoration: none;
+    }
+    .home-link:hover { text-decoration: underline; }
     .hidden { display: none !important; }
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
@@ -153,9 +160,10 @@
 <body>
   <div class="wrap">
     <header class="brand">
+      <a class="home-link" href="../index.html">← 返回三件套导航</a>
       <div class="brand-mark"><span aria-hidden="true"></span>六年级上册 · 小学数学</div>
       <div class="tag">错题诊断与个性化复习小测</div>
-      <p>覆盖分数乘除、分数混合运算、比、圆、百分数等六年级上册常见考点。完成 5 题后生成薄弱点与今日复习清单。</p>
+      <p>覆盖分数乘除、分数混合运算、比、圆、百分数等六年级上册常见考点。每轮 5 道不重复题，完成后生成薄弱点与今日复习清单。</p>
     </header>
 
     <section id="setup" class="panel">
@@ -197,13 +205,13 @@
       <p class="sub">六年级上册 · 小学数学｜根据错题生成薄弱点与复习任务。</p>
       <div class="score-row">
         <span class="num" id="scoreNum">0</span>
-        <span>/ 5 题正确</span>
+        <span>/ <span id="scoreDen">5</span> 题正确</span>
       </div>
       <p style="margin:0 0 10px;font-weight:700;">薄弱点汇总</p>
       <ul class="weak-list" id="weakList"></ul>
       <p style="margin:22px 0 10px;font-weight:700;">今日复习清单</p>
       <ul class="plan-list" id="planList"></ul>
-      <div class="hint-box">需要更细讲解时，把错题复制到「错题诊断与个性化复习助手」智能体继续追问。</div>
+      <div class="hint-box">需要更细讲解时，把错题带到 <a href="../01-agent/agent.html">错题诊断与个性化复习助手</a> 继续追问。</div>
       <div class="actions">
         <button type="button" class="btn btn-primary" id="retryBtn">再测一组</button>
         <button type="button" class="btn btn-ghost" id="copyPlanBtn">复制复习清单</button>
@@ -212,124 +220,46 @@
   </div>
 
   <script>
-    /* 六年级上册小学数学常见考点题库（人教版脉络） */
+    const QUIZ_SIZE = 5;
+
+    /* 每类至少 5 道不重复题，避免专项小测循环凑题 */
     const POOL = [
-      {
-        q: "计算：2/3 × 3/4 = ?",
-        options: ["1/2", "6/12", "5/7", "2/4"],
-        answer: 0,
-        kp: "分数乘法",
-        cause: "计算失误",
-        tip: "分子乘分子、分母乘分母：2×3 / 3×4 = 6/12 = 1/2（要约分）。"
-      },
-      {
-        q: "小明有 3/4 米彩带，用去其中的 2/5，用去了多少米？",
-        options: ["3/4 - 2/5", "3/4 × 2/5", "3/4 ÷ 2/5", "2/5 ÷ 3/4"],
-        answer: 1,
-        kp: "分数乘法意义",
-        cause: "概念理解",
-        tip: "求一个数的几分之几用乘法：3/4 × 2/5。"
-      },
-      {
-        q: "计算：3/5 ÷ 2/5 = ?",
-        options: ["6/25", "3/2", "2/3", "1"],
-        answer: 1,
-        kp: "分数除法",
-        cause: "方法选择",
-        tip: "除以一个数等于乘它的倒数：3/5 × 5/2 = 3/2。"
-      },
-      {
-        q: "一个数的倒数是 4/7，这个数是？",
-        options: ["4/7", "7/4", "1", "3/7"],
-        answer: 1,
-        kp: "倒数",
-        cause: "概念理解",
-        tip: "互为倒数的两数乘积为 1，所以是 7/4。"
-      },
-      {
-        q: "计算：1/2 + 1/3 × 1/4",
-        options: ["5/12", "7/24", "1/3", "5/24"],
-        answer: 1,
-        kp: "分数四则混合运算",
-        cause: "方法选择",
-        tip: "先乘后加：1/3×1/4=1/12，再 1/2+1/12=6/12+1/12=7/12……等等，1/2=6/12，6/12+1/12=7/12。选项应为 7/12 但这里选 7/24 需核对——修正：1/2+1/12=7/12，题面选项调整。"
-      },
-      {
-        q: "比 2:8 化成最简整数比是？",
-        options: ["1:4", "2:8", "4:16", "1:2"],
-        answer: 0,
-        kp: "比的化简",
-        cause: "计算失误",
-        tip: "前后项同除以最大公约数 2，得 1:4。"
-      },
-      {
-        q: "圆的半径是 3 cm，周长是多少？（π 取 3.14）",
-        options: ["9.42 cm", "18.84 cm", "28.26 cm", "6.28 cm"],
-        answer: 1,
-        kp: "圆的周长",
-        cause: "方法选择",
-        tip: "C=2πr=2×3.14×3=18.84 cm。"
-      },
-      {
-        q: "圆的半径是 4 cm，面积是多少？（π 取 3.14）",
-        options: ["12.56 cm²", "25.12 cm²", "50.24 cm²", "6.28 cm²"],
-        answer: 2,
-        kp: "圆的面积",
-        cause: "概念理解",
-        tip: "S=πr²=3.14×16=50.24 cm²（别用成周长公式）。"
-      },
-      {
-        q: "把分数 3/4 写成百分数是？",
-        options: ["3.4%", "34%", "75%", "0.75%"],
-        answer: 2,
-        kp: "百分数",
-        cause: "概念理解",
-        tip: "3÷4=0.75=75%。"
-      },
-      {
-        q: "一件上衣原价 200 元，打八折后是多少元？",
-        options: ["160 元", "180 元", "240 元", "20 元"],
-        answer: 0,
-        kp: "百分数应用（折扣）",
-        cause: "概念理解",
-        tip: "八折即 80%，200×80%=160 元。"
-      },
-      {
-        q: "甲数是 12，乙数是 4，甲乙两数的比是？",
-        options: ["4:12", "3:1", "1:3", "12:1"],
-        answer: 1,
-        kp: "比的意义",
-        cause: "审题不清",
-        tip: "甲:乙=12:4=3:1。"
-      },
-      {
-        q: "计算：(1/2 + 1/3) × 6/5",
-        options: ["1", "6/5", "1/5", "11/15"],
-        answer: 0,
-        kp: "分数四则混合运算",
-        cause: "计算失误",
-        tip: "括号内 1/2+1/3=5/6，再 5/6×6/5=1。"
-      }
+      { unit: "multiply", q: "计算：2/3 × 3/4 = ？（结果用最简分数表示）", options: ["1/2", "5/7", "6/7", "5/12"], answer: 0, kp: "分数乘法", cause: "计算失误", tip: "分子乘分子、分母乘分母：2×3 / 3×4 = 6/12 = 1/2（要约分）。" },
+      { unit: "multiply", q: "小明有 3/4 米彩带，用去其中的 2/5，用去了多少米？", options: ["3/4 − 2/5", "3/4 × 2/5", "3/4 ÷ 2/5", "2/5 ÷ 3/4"], answer: 1, kp: "分数乘法意义", cause: "概念理解", tip: "求一个数的几分之几用乘法：3/4 × 2/5。" },
+      { unit: "multiply", q: "计算：4/5 × 5/8 = ？（先约分再乘，结果用最简分数表示）", options: ["1/2", "9/13", "1/8", "20/13"], answer: 0, kp: "分数乘法", cause: "计算失误", tip: "先约分：4 和 8 约成 1 和 2，5 和 5 约成 1 和 1，得 1/2。" },
+      { unit: "multiply", q: "一块布长 3/5 米，剪去它的 1/2，剪去了多少米？", options: ["3/10 米", "1/10 米", "4/5 米", "3/7 米"], answer: 0, kp: "分数乘法意义", cause: "概念理解", tip: "剪去它的 1/2，就是求 3/5 的 1/2：3/5 × 1/2 = 3/10 米。" },
+      { unit: "multiply", q: "计算：6 × 2/3 = ？", options: ["4", "12", "9", "3"], answer: 0, kp: "分数乘法", cause: "方法选择", tip: "整数乘分数：6 × 2/3 = 12/3 = 4。" },
+
+      { unit: "divide", q: "计算：3/5 ÷ 2/5 = ？", options: ["6/25", "3/2", "2/3", "1"], answer: 1, kp: "分数除法", cause: "方法选择", tip: "除以一个数等于乘它的倒数：3/5 × 5/2 = 3/2。" },
+      { unit: "divide", q: "一个数的倒数是 4/7，这个数是？", options: ["4/7", "7/4", "1", "3/7"], answer: 1, kp: "倒数", cause: "概念理解", tip: "互为倒数的两数乘积为 1，所以是 7/4。" },
+      { unit: "divide", q: "计算：3/4 ÷ 1/2 = ？", options: ["3/8", "3/2", "2/3", "5/4"], answer: 1, kp: "分数除法", cause: "方法选择", tip: "3/4 × 2/1 = 6/4 = 3/2。" },
+      { unit: "divide", q: "一瓶果汁 3/4 升，倒入容量 1/8 升的杯子，最多能倒满几杯？", options: ["6", "3/32", "8", "4"], answer: 0, kp: "分数除法应用", cause: "概念理解", tip: "问能倒满几杯，用除法：3/4 ÷ 1/8 = 3/4 × 8/1 = 6。" },
+      { unit: "divide", q: "计算：1 ÷ 2/5 = ？", options: ["2/5", "5/2", "3/5", "1/2"], answer: 1, kp: "分数除法", cause: "方法选择", tip: "1 乘 2/5 的倒数：1 × 5/2 = 5/2。" },
+
+      { unit: "mixed", q: "计算：1/2 + 1/3 × 1/4 = ？", options: ["5/12", "7/12", "1/3", "1/24"], answer: 1, kp: "分数四则混合运算", cause: "方法选择", tip: "先乘后加：1/3×1/4=1/12，再 1/2+1/12=6/12+1/12=7/12。" },
+      { unit: "mixed", q: "计算：(1/2 + 1/3) × 6/5 = ？", options: ["1", "6/5", "1/5", "11/15"], answer: 0, kp: "分数四则混合运算", cause: "计算失误", tip: "括号内 1/2+1/3=5/6，再 5/6×6/5=1。" },
+      { unit: "mixed", q: "计算：1/2 × 1/3 + 1/6 = ？", options: ["1/3", "1/6", "2/9", "1/2"], answer: 0, kp: "分数四则混合运算", cause: "方法选择", tip: "先乘：1/2×1/3=1/6，再 1/6+1/6=1/3。" },
+      { unit: "mixed", q: "计算：5/6 − 1/2 × 1/3 = ？", options: ["2/3", "1/3", "4/3", "1/6"], answer: 0, kp: "分数四则混合运算", cause: "方法选择", tip: "先乘：1/2×1/3=1/6，再 5/6−1/6=4/6=2/3。" },
+      { unit: "mixed", q: "计算：(3/4 − 1/4) ÷ 1/2 = ？", options: ["1", "1/2", "1/4", "2"], answer: 0, kp: "分数四则混合运算", cause: "计算失误", tip: "括号内 3/4−1/4=1/2，再 1/2 ÷ 1/2 = 1。" },
+
+      { unit: "ratio", q: "把比 2:8 化成最简整数比是？", options: ["1:4", "2:8", "4:16", "1:2"], answer: 0, kp: "比的化简", cause: "计算失误", tip: "前后项同除以最大公约数 2，得 1:4。" },
+      { unit: "ratio", q: "甲数是 12，乙数是 4，甲乙两数的比是？", options: ["4:12", "3:1", "1:3", "12:1"], answer: 1, kp: "比的意义", cause: "审题不清", tip: "甲:乙=12:4=3:1。" },
+      { unit: "ratio", q: "把 12:18 化成最简整数比是？", options: ["2:3", "6:9", "12:18", "3:2"], answer: 0, kp: "比的化简", cause: "计算失误", tip: "前后项同除以最大公约数 6，得 2:3。" },
+      { unit: "ratio", q: "20 与 5 的比，化成最简整数比是？", options: ["4:1", "20:5", "5:20", "1:4"], answer: 0, kp: "比的意义", cause: "审题不清", tip: "20:5，同除以 5，得 4:1。" },
+      { unit: "ratio", q: "比的前项是 6，后项是 9，化成最简整数比是？", options: ["2:3", "3:2", "6:9", "1:3"], answer: 0, kp: "比的化简", cause: "计算失误", tip: "6:9 同除以 3，得 2:3。" },
+
+      { unit: "circle", q: "圆的半径是 3 cm，周长是多少？（π 取 3.14）", options: ["9.42 cm", "18.84 cm", "28.26 cm", "6.28 cm"], answer: 1, kp: "圆的周长", cause: "方法选择", tip: "C=2πr=2×3.14×3=18.84 cm。" },
+      { unit: "circle", q: "圆的半径是 4 cm，面积是多少？（π 取 3.14）", options: ["12.56 cm²", "25.12 cm²", "50.24 cm²", "6.28 cm²"], answer: 2, kp: "圆的面积", cause: "概念理解", tip: "S=πr²=3.14×16=50.24 cm²（别用成周长公式）。" },
+      { unit: "circle", q: "圆的直径是 10 cm，周长是多少？（π 取 3.14）", options: ["31.4 cm", "15.7 cm", "78.5 cm", "62.8 cm"], answer: 0, kp: "圆的周长", cause: "方法选择", tip: "C=πd=3.14×10=31.4 cm。" },
+      { unit: "circle", q: "圆的半径是 2 cm，面积是多少？（π 取 3.14）", options: ["12.56 cm²", "6.28 cm²", "25.12 cm²", "4 cm²"], answer: 0, kp: "圆的面积", cause: "概念理解", tip: "S=πr²=3.14×4=12.56 cm²。" },
+      { unit: "circle", q: "圆的半径是 5 cm，周长是多少？（π 取 3.14）", options: ["31.4 cm", "15.7 cm", "78.5 cm", "10 cm"], answer: 0, kp: "圆的周长", cause: "方法选择", tip: "C=2πr=2×3.14×5=31.4 cm。" },
+
+      { unit: "percent", q: "把分数 3/4 写成百分数是？", options: ["3.4%", "34%", "75%", "0.75%"], answer: 2, kp: "百分数", cause: "概念理解", tip: "3÷4=0.75=75%。" },
+      { unit: "percent", q: "一件上衣原价 200 元，打八折后是多少元？", options: ["160 元", "180 元", "240 元", "20 元"], answer: 0, kp: "百分数应用（折扣）", cause: "概念理解", tip: "八折即 80%，200×80%=160 元。" },
+      { unit: "percent", q: "把 1/5 写成百分数是？", options: ["15%", "20%", "50%", "5%"], answer: 1, kp: "百分数", cause: "概念理解", tip: "1÷5=0.2=20%。" },
+      { unit: "percent", q: "一本书原价 80 元，打七五折后是多少元？", options: ["60 元", "75 元", "5 元", "70 元"], answer: 0, kp: "百分数应用（折扣）", cause: "概念理解", tip: "七五折即 75%，80×75%=60 元。" },
+      { unit: "percent", q: "一个数的 20% 是 10，这个数是？", options: ["2", "50", "30", "200"], answer: 1, kp: "百分数应用", cause: "方法选择", tip: "求原数用除法：10 ÷ 20% = 10 ÷ 0.2 = 50。" }
     ];
-
-    // 修正第 5 题选项与答案（先前 tip 自检）
-    POOL[4] = {
-      q: "计算：1/2 + 1/3 × 1/4 = ?",
-      options: ["5/12", "7/12", "1/3", "1/24"],
-      answer: 1,
-      kp: "分数四则混合运算",
-      cause: "方法选择",
-      tip: "先算乘法：1/3×1/4=1/12；再 1/2+1/12=6/12+1/12=7/12。"
-    };
-
-    const UNIT_MATCH = {
-      multiply: (kp) => /分数乘法/.test(kp),
-      divide: (kp) => /分数除法|倒数/.test(kp),
-      mixed: (kp) => /四则|混合/.test(kp),
-      ratio: (kp) => /比/.test(kp),
-      circle: (kp) => /圆/.test(kp),
-      percent: (kp) => /百分/.test(kp)
-    };
 
     const UNIT_LABEL = {
       multiply: "分数乘法",
@@ -346,7 +276,8 @@
       answered: false,
       correctCount: 0,
       wrongs: [],
-      unit: null
+      unit: null,
+      total: QUIZ_SIZE
     };
 
     const el = {
@@ -360,6 +291,7 @@
       progressText: document.getElementById("progressText"),
       progressBar: document.getElementById("progressBar"),
       scoreNum: document.getElementById("scoreNum"),
+      scoreDen: document.getElementById("scoreDen"),
       weakList: document.getElementById("weakList"),
       planList: document.getElementById("planList")
     };
@@ -373,6 +305,25 @@
       return a;
     }
 
+    function uniqueByStem(list) {
+      const seen = new Set();
+      return list.filter((item) => {
+        if (seen.has(item.q)) return false;
+        seen.add(item.q);
+        return true;
+      });
+    }
+
+    function shuffleOptions(item) {
+      const pairs = item.options.map((opt, i) => ({ opt, i }));
+      const shuffled = shuffle(pairs);
+      return {
+        ...item,
+        options: shuffled.map((p) => p.opt),
+        answer: shuffled.findIndex((p) => p.i === item.answer)
+      };
+    }
+
     function show(section) {
       el.setup.classList.add("hidden");
       el.quiz.classList.add("hidden");
@@ -381,24 +332,34 @@
     }
 
     function pickQuestions(unit) {
-      let pool = POOL.slice();
-      if (unit && UNIT_MATCH[unit]) {
-        const filtered = POOL.filter((q) => UNIT_MATCH[unit](q.kp));
-        if (filtered.length) pool = filtered;
+      let picked = [];
+      if (unit) {
+        picked = shuffle(uniqueByStem(POOL.filter((q) => q.unit === unit)));
+      } else {
+        const used = new Set();
+        const units = shuffle([...new Set(POOL.map((q) => q.unit))]);
+        units.forEach((u) => {
+          if (picked.length >= QUIZ_SIZE) return;
+          const cands = shuffle(POOL.filter((q) => q.unit === u && !used.has(q.q)));
+          if (!cands.length) return;
+          used.add(cands[0].q);
+          picked.push(cands[0]);
+        });
+        shuffle(POOL).forEach((q) => {
+          if (picked.length >= QUIZ_SIZE) return;
+          if (used.has(q.q)) return;
+          used.add(q.q);
+          picked.push(q);
+        });
+        picked = shuffle(picked);
       }
-      const shuffled = shuffle(pool);
-      if (shuffled.length >= 5) return shuffled.slice(0, 5);
-      // 专项题不足 5 道时循环补齐，保证仍是 5 题体验
-      const out = [];
-      while (out.length < 5) {
-        out.push(...shuffle(pool));
-      }
-      return out.slice(0, 5);
+      return uniqueByStem(picked).slice(0, QUIZ_SIZE).map(shuffleOptions);
     }
 
     function startQuiz(unit) {
       state.unit = unit || null;
       state.questions = pickQuestions(state.unit);
+      state.total = state.questions.length;
       state.index = 0;
       state.correctCount = 0;
       state.wrongs = [];
@@ -416,13 +377,14 @@
     function renderQuestion() {
       const item = state.questions[state.index];
       const n = state.index + 1;
-      el.progressText.textContent = `第 ${n} / 5 题`;
-      el.progressBar.style.width = `${((n - 1) / 5) * 100}%`;
+      const total = state.total;
+      el.progressText.textContent = `第 ${n} / ${total} 题`;
+      el.progressBar.style.width = `${((n - 1) / total) * 100}%`;
       el.questionText.textContent = item.q;
       el.feedback.className = "feedback";
       el.feedback.textContent = "";
       el.nextBtn.disabled = true;
-      el.nextBtn.textContent = n === 5 ? "查看诊断结果" : "下一题";
+      el.nextBtn.textContent = n === total ? "查看诊断结果" : "下一题";
       state.answered = false;
       el.options.innerHTML = "";
       item.options.forEach((opt, i) => {
@@ -454,12 +416,12 @@
         el.feedback.textContent = `不够准确。知识点：${item.kp}｜可能错因：${item.cause}。提示：${item.tip}`;
       }
       el.nextBtn.disabled = false;
-      el.progressBar.style.width = `${((state.index + 1) / 5) * 100}%`;
+      el.progressBar.style.width = `${((state.index + 1) / state.total) * 100}%`;
     }
 
     function nextStep() {
       if (!state.answered) return;
-      if (state.index < 4) {
+      if (state.index < state.total - 1) {
         state.index += 1;
         renderQuestion();
       } else {
@@ -489,6 +451,7 @@
     function renderResult() {
       show(el.result);
       el.scoreNum.textContent = String(state.correctCount);
+      if (el.scoreDen) el.scoreDen.textContent = String(state.total);
       el.weakList.innerHTML = "";
       if (!state.wrongs.length) {
         el.weakList.innerHTML = "<li>本轮无明显薄弱点。可再测一组或加大百分数、圆面积练习。</li>";
@@ -513,7 +476,7 @@
     }
 
     function planPlainText() {
-      const lines = [`【今日复习清单】六年级上册 · 小学数学`, `正确 ${state.correctCount}/5`];
+      const lines = [`【今日复习清单】六年级上册 · 小学数学`, `正确 ${state.correctCount}/${state.total}`];
       if (state.wrongs.length) {
         lines.push("薄弱点：" + [...new Set(state.wrongs.map((w) => w.kp))].join("、"));
       }
