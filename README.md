@@ -18,14 +18,18 @@
 
 ## 提交清单（已全部可访问）
 
+**推荐：发布到 GitHub Pages（关机也能打开）**  
+步骤见 [`发布到GitHub.md`](./发布到GitHub.md)。发布后链接形如：`https://你的用户名.github.io/jiaoyu-ai-zuoye/`
+
+**临时本机（需电脑开着、服务在跑）：**
+
 总入口：`http://127.0.0.1:8787/`  
-外网入口：`https://metal-books-love.loca.lt/`
 
 | 路径 | 提交内容 | 可复制链接 |
 |------|----------|------------|
-| 路径1 | Agent 链接 + 提示词 | 本机 `http://127.0.0.1:8787/01-智能体/agent.html` · 外网 `https://metal-books-love.loca.lt/01-智能体/agent.html` |
-| 路径2 | 多维表链接 | 本机 `http://127.0.0.1:8787/02-多维表/table.html` · 外网 `https://metal-books-love.loca.lt/02-多维表/table.html` |
-| 路径3 | HTML 文件 / 链接 | 本机 `http://127.0.0.1:8787/03-交互网页/index.html` · 外网 `https://metal-books-love.loca.lt/03-交互网页/index.html` · 文件 `03-交互网页/index.html` |
+| 路径1 | Agent 链接 + 提示词 | `http://127.0.0.1:8787/01-智能体/agent.html` |
+| 路径2 | 多维表链接 | `http://127.0.0.1:8787/02-多维表/table.html` |
+| 路径3 | HTML 文件 / 链接 | `http://127.0.0.1:8787/03-交互网页/index.html` · 文件 `03-交互网页/index.html` |
 
 ## 建议演示顺序
 
