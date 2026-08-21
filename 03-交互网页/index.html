@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>六年级上册小学数学 · 错题诊断小测</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2b3c;
+      --muted: #5a6b7c;
+      --paper: #f7f3eb;
+      --panel: #fffdf8;
+      --line: #d8cfc0;
+      --accent: #0d7a6f;
+      --accent-deep: #065a52;
+      --warm: #c45c26;
+      --ok: #1f7a4c;
+      --bad: #b33a3a;
+      --shadow: 0 18px 50px rgba(26, 43, 60, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #dceeea 0%, transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, #f3e2d4 0%, transparent 50%),
+        linear-gradient(180deg, #eef4f1 0%, var(--paper) 42%, #ebe4d8 100%);
+    }
+    .wrap { width: min(920px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 64px; }
+    .brand { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; animation: rise 0.7s ease both; }
+    .brand-mark {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: "ZCOOL XiaoWei", serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      letter-spacing: 0.04em; color: var(--accent-deep);
+    }
+    .brand-mark span {
+      width: 14px; height: 14px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--accent), #3aa897);
+      box-shadow: 0 0 0 6px rgba(13, 122, 111, 0.12);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .brand p { margin: 0; max-width: 38em; color: var(--muted); line-height: 1.7; font-size: 0.98rem; }
+    .tag {
+      display: inline-block; margin-top: 4px; padding: 4px 10px; border-radius: 999px;
+      background: #eef8f6; color: var(--accent-deep); font-size: 0.82rem; font-weight: 700;
+      border: 1px solid #b7ddd6;
+    }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: clamp(20px, 4vw, 32px); animation: rise 0.75s ease both;
+    }
+    .step-label {
+      display: inline-block; font-size: 0.78rem; letter-spacing: 0.12em;
+      color: var(--accent); font-weight: 700; margin-bottom: 10px;
+    }
+    h2 { margin: 0 0 8px; font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.35; }
+    .sub { margin: 0 0 22px; color: var(--muted); line-height: 1.65; }
+    .units {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 8px;
+    }
+    @media (max-width: 700px) { .units { grid-template-columns: 1fr 1fr; } }
+    .unit-chip {
+      appearance: none; width: 100%; text-align: left; cursor: pointer;
+      background: #fff; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 12px 14px; font: inherit; font-size: 0.9rem; line-height: 1.4; color: var(--muted);
+      transition: border-color 0.2s, transform 0.15s, background 0.2s, box-shadow 0.2s;
+    }
+    .unit-chip:hover {
+      border-color: var(--accent); background: #eef8f6; color: var(--ink);
+      transform: translateY(-1px); box-shadow: 0 6px 16px rgba(13, 122, 111, 0.12);
+    }
+    .unit-chip:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .unit-chip b { display: block; color: var(--ink); margin-bottom: 4px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .btn {
+      appearance: none; border: none; border-radius: 999px; padding: 12px 22px;
+      font: inherit; font-weight: 700; cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s, background 0.2s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-deep); }
+    .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+    .progress {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 18px; color: var(--muted); font-size: 0.92rem;
+    }
+    .bar { flex: 1; height: 8px; background: #ebe4d8; border-radius: 999px; overflow: hidden; }
+    .bar > i {
+      display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, var(--accent), #2f9f8f);
+      border-radius: inherit; transition: width 0.35s ease;
+    }
+    .q-text { font-size: 1.12rem; line-height: 1.7; margin: 0 0 18px; white-space: pre-wrap; }
+    .options { display: grid; gap: 10px; }
+    .choice {
+      appearance: none; border: 1.5px solid var(--line); background: #fff; border-radius: 14px;
+      padding: 16px 18px; text-align: left; cursor: pointer; font: inherit; color: var(--ink);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .choice:hover { border-color: #9fc4be; transform: translateY(-1px); }
+    .choice.active {
+      border-color: var(--accent); background: #eef8f6;
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+    .feedback {
+      margin-top: 16px; padding: 14px 16px; border-radius: 12px;
+      line-height: 1.65; display: none;
+    }
+    .feedback.show { display: block; animation: fade 0.35s ease; }
+    .feedback.ok { background: #e8f6ee; color: var(--ok); border: 1px solid #b7e0c7; }
+    .feedback.bad { background: #fceeee; color: var(--bad); border: 1px solid #efc2c2; }
+    .weak-list, .plan-list {
+      list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+    }
+    .weak-list li, .plan-list li {
+      background: #fff; border: 1px solid var(--line); border-radius: 12px;
+      padding: 14px 16px; line-height: 1.6;
+    }
+    .weak-list strong, .plan-list strong { color: var(--accent-deep); }
+    .score-row { display: flex; align-items: baseline; gap: 10px; margin: 8px 0 20px; }
+    .score-row .num {
+      font-family: "ZCOOL XiaoWei", serif; font-size: 3rem; color: var(--warm); line-height: 1;
+    }
+    .hint-box {
+      margin-top: 20px; padding: 14px 16px; border-left: 4px solid var(--accent);
+      background: #eef8f6; border-radius: 0 12px 12px 0; color: var(--muted);
+      line-height: 1.65; font-size: 0.95rem;
+    }
+    .hidden { display: none !important; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="brand">
+      <div class="brand-mark"><span aria-hidden="true"></span>六年级上册 · 小学数学</div>
+      <div class="tag">错题诊断与个性化复习小测</div>
+      <p>覆盖分数乘除、分数混合运算、比、圆、百分数等六年级上册常见考点。完成 5 题后生成薄弱点与今日复习清单。</p>
+    </header>
+
+    <section id="setup" class="panel">
+      <div class="step-label">STEP 01</div>
+      <h2>六年级上册知识点速览</h2>
+      <p class="sub">本页已锁定为「小学六年级上册 · 数学」。点击某个知识点开始专项小测，或点下方按钮综合抽题。</p>
+      <div class="units" id="unitGroup">
+        <button type="button" class="unit-chip" data-unit="multiply"><b>分数乘法</b>意义与计算 · 点此开测</button>
+        <button type="button" class="unit-chip" data-unit="divide"><b>分数除法</b>倒数与应用 · 点此开测</button>
+        <button type="button" class="unit-chip" data-unit="mixed"><b>分数四则</b>混合运算 · 点此开测</button>
+        <button type="button" class="unit-chip" data-unit="ratio"><b>比</b>意义与化简 · 点此开测</button>
+        <button type="button" class="unit-chip" data-unit="circle"><b>圆</b>周长与面积 · 点此开测</button>
+        <button type="button" class="unit-chip" data-unit="percent"><b>百分数</b>意义与应用 · 点此开测</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="startBtn">综合随机 5 题小测</button>
+      </div>
+    </section>
+
+    <section id="quiz" class="panel hidden">
+      <div class="progress">
+        <span id="progressText">第 1 / 5 题</span>
+        <div class="bar"><i id="progressBar"></i></div>
+      </div>
+      <div class="step-label">STEP 02</div>
+      <h2>六年级上册小测</h2>
+      <p class="q-text" id="questionText"></p>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="backSetupBtn">返回首页</button>
+        <button type="button" class="btn btn-primary" id="nextBtn" disabled>下一题</button>
+      </div>
+    </section>
+
+    <section id="result" class="panel hidden">
+      <div class="step-label">STEP 03</div>
+      <h2>诊断结果与今日复习清单</h2>
+      <p class="sub">六年级上册 · 小学数学｜根据错题生成薄弱点与复习任务。</p>
+      <div class="score-row">
+        <span class="num" id="scoreNum">0</span>
+        <span>/ 5 题正确</span>
+      </div>
+      <p style="margin:0 0 10px;font-weight:700;">薄弱点汇总</p>
+      <ul class="weak-list" id="weakList"></ul>
+      <p style="margin:22px 0 10px;font-weight:700;">今日复习清单</p>
+      <ul class="plan-list" id="planList"></ul>
+      <div class="hint-box">需要更细讲解时，把错题复制到「错题诊断与个性化复习助手」智能体继续追问。</div>
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="retryBtn">再测一组</button>
+        <button type="button" class="btn btn-ghost" id="copyPlanBtn">复制复习清单</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /* 六年级上册小学数学常见考点题库（人教版脉络） */
+    const POOL = [
+      {
+        q: "计算：2/3 × 3/4 = ?",
+        options: ["1/2", "6/12", "5/7", "2/4"],
+        answer: 0,
+        kp: "分数乘法",
+        cause: "计算失误",
+        tip: "分子乘分子、分母乘分母：2×3 / 3×4 = 6/12 = 1/2（要约分）。"
+      },
+      {
+        q: "小明有 3/4 米彩带，用去其中的 2/5，用去了多少米？",
+        options: ["3/4 - 2/5", "3/4 × 2/5", "3/4 ÷ 2/5", "2/5 ÷ 3/4"],
+        answer: 1,
+        kp: "分数乘法意义",
+        cause: "概念理解",
+        tip: "求一个数的几分之几用乘法：3/4 × 2/5。"
+      },
+      {
+        q: "计算：3/5 ÷ 2/5 = ?",
+        options: ["6/25", "3/2", "2/3", "1"],
+        answer: 1,
+        kp: "分数除法",
+        cause: "方法选择",
+        tip: "除以一个数等于乘它的倒数：3/5 × 5/2 = 3/2。"
+      },
+      {
+        q: "一个数的倒数是 4/7，这个数是？",
+        options: ["4/7", "7/4", "1", "3/7"],
+        answer: 1,
+        kp: "倒数",
+        cause: "概念理解",
+        tip: "互为倒数的两数乘积为 1，所以是 7/4。"
+      },
+      {
+        q: "计算：1/2 + 1/3 × 1/4",
+        options: ["5/12", "7/24", "1/3", "5/24"],
+        answer: 1,
+        kp: "分数四则混合运算",
+        cause: "方法选择",
+        tip: "先乘后加：1/3×1/4=1/12，再 1/2+1/12=6/12+1/12=7/12……等等，1/2=6/12，6/12+1/12=7/12。选项应为 7/12 但这里选 7/24 需核对——修正：1/2+1/12=7/12，题面选项调整。"
+      },
+      {
+        q: "比 2:8 化成最简整数比是？",
+        options: ["1:4", "2:8", "4:16", "1:2"],
+        answer: 0,
+        kp: "比的化简",
+        cause: "计算失误",
+        tip: "前后项同除以最大公约数 2，得 1:4。"
+      },
+      {
+        q: "圆的半径是 3 cm，周长是多少？（π 取 3.14）",
+        options: ["9.42 cm", "18.84 cm", "28.26 cm", "6.28 cm"],
+        answer: 1,
+        kp: "圆的周长",
+        cause: "方法选择",
+        tip: "C=2πr=2×3.14×3=18.84 cm。"
+      },
+      {
+        q: "圆的半径是 4 cm，面积是多少？（π 取 3.14）",
+        options: ["12.56 cm²", "25.12 cm²", "50.24 cm²", "6.28 cm²"],
+        answer: 2,
+        kp: "圆的面积",
+        cause: "概念理解",
+        tip: "S=πr²=3.14×16=50.24 cm²（别用成周长公式）。"
+      },
+      {
+        q: "把分数 3/4 写成百分数是？",
+        options: ["3.4%", "34%", "75%", "0.75%"],
+        answer: 2,
+        kp: "百分数",
+        cause: "概念理解",
+        tip: "3÷4=0.75=75%。"
+      },
+      {
+        q: "一件上衣原价 200 元，打八折后是多少元？",
+        options: ["160 元", "180 元", "240 元", "20 元"],
+        answer: 0,
+        kp: "百分数应用（折扣）",
+        cause: "概念理解",
+        tip: "八折即 80%，200×80%=160 元。"
+      },
+      {
+        q: "甲数是 12，乙数是 4，甲乙两数的比是？",
+        options: ["4:12", "3:1", "1:3", "12:1"],
+        answer: 1,
+        kp: "比的意义",
+        cause: "审题不清",
+        tip: "甲:乙=12:4=3:1。"
+      },
+      {
+        q: "计算：(1/2 + 1/3) × 6/5",
+        options: ["1", "6/5", "1/5", "11/15"],
+        answer: 0,
+        kp: "分数四则混合运算",
+        cause: "计算失误",
+        tip: "括号内 1/2+1/3=5/6，再 5/6×6/5=1。"
+      }
+    ];
+
+    // 修正第 5 题选项与答案（先前 tip 自检）
+    POOL[4] = {
+      q: "计算：1/2 + 1/3 × 1/4 = ?",
+      options: ["5/12", "7/12", "1/3", "1/24"],
+      answer: 1,
+      kp: "分数四则混合运算",
+      cause: "方法选择",
+      tip: "先算乘法：1/3×1/4=1/12；再 1/2+1/12=6/12+1/12=7/12。"
+    };
+
+    const UNIT_MATCH = {
+      multiply: (kp) => /分数乘法/.test(kp),
+      divide: (kp) => /分数除法|倒数/.test(kp),
+      mixed: (kp) => /四则|混合/.test(kp),
+      ratio: (kp) => /比/.test(kp),
+      circle: (kp) => /圆/.test(kp),
+      percent: (kp) => /百分/.test(kp)
+    };
+
+    const UNIT_LABEL = {
+      multiply: "分数乘法",
+      divide: "分数除法",
+      mixed: "分数四则",
+      ratio: "比",
+      circle: "圆",
+      percent: "百分数"
+    };
+
+    const state = {
+      questions: [],
+      index: 0,
+      answered: false,
+      correctCount: 0,
+      wrongs: [],
+      unit: null
+    };
+
+    const el = {
+      setup: document.getElementById("setup"),
+      quiz: document.getElementById("quiz"),
+      result: document.getElementById("result"),
+      questionText: document.getElementById("questionText"),
+      options: document.getElementById("options"),
+      feedback: document.getElementById("feedback"),
+      nextBtn: document.getElementById("nextBtn"),
+      progressText: document.getElementById("progressText"),
+      progressBar: document.getElementById("progressBar"),
+      scoreNum: document.getElementById("scoreNum"),
+      weakList: document.getElementById("weakList"),
+      planList: document.getElementById("planList")
+    };
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function show(section) {
+      el.setup.classList.add("hidden");
+      el.quiz.classList.add("hidden");
+      el.result.classList.add("hidden");
+      section.classList.remove("hidden");
+    }
+
+    function pickQuestions(unit) {
+      let pool = POOL.slice();
+      if (unit && UNIT_MATCH[unit]) {
+        const filtered = POOL.filter((q) => UNIT_MATCH[unit](q.kp));
+        if (filtered.length) pool = filtered;
+      }
+      const shuffled = shuffle(pool);
+      if (shuffled.length >= 5) return shuffled.slice(0, 5);
+      // 专项题不足 5 道时循环补齐，保证仍是 5 题体验
+      const out = [];
+      while (out.length < 5) {
+        out.push(...shuffle(pool));
+      }
+      return out.slice(0, 5);
+    }
+
+    function startQuiz(unit) {
+      state.unit = unit || null;
+      state.questions = pickQuestions(state.unit);
+      state.index = 0;
+      state.correctCount = 0;
+      state.wrongs = [];
+      state.answered = false;
+      const title = document.querySelector("#quiz h2");
+      if (title) {
+        title.textContent = state.unit
+          ? `专项小测 · ${UNIT_LABEL[state.unit]}`
+          : "综合随机小测";
+      }
+      show(el.quiz);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const item = state.questions[state.index];
+      const n = state.index + 1;
+      el.progressText.textContent = `第 ${n} / 5 题`;
+      el.progressBar.style.width = `${((n - 1) / 5) * 100}%`;
+      el.questionText.textContent = item.q;
+      el.feedback.className = "feedback";
+      el.feedback.textContent = "";
+      el.nextBtn.disabled = true;
+      el.nextBtn.textContent = n === 5 ? "查看诊断结果" : "下一题";
+      state.answered = false;
+      el.options.innerHTML = "";
+      item.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "choice";
+        btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+        btn.addEventListener("click", () => selectOption(i, btn));
+        el.options.appendChild(btn);
+      });
+    }
+
+    function selectOption(i, btn) {
+      if (state.answered) return;
+      state.answered = true;
+      const item = state.questions[state.index];
+      const correct = i === item.answer;
+      el.options.querySelectorAll(".choice").forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === item.answer) b.classList.add("active");
+      });
+      if (!correct) btn.style.borderColor = "var(--bad)";
+      el.feedback.classList.add("show", correct ? "ok" : "bad");
+      if (correct) {
+        state.correctCount += 1;
+        el.feedback.textContent = "回答正确。注意保留完整计算步骤。";
+      } else {
+        state.wrongs.push(item);
+        el.feedback.textContent = `不够准确。知识点：${item.kp}｜可能错因：${item.cause}。提示：${item.tip}`;
+      }
+      el.nextBtn.disabled = false;
+      el.progressBar.style.width = `${((state.index + 1) / 5) * 100}%`;
+    }
+
+    function nextStep() {
+      if (!state.answered) return;
+      if (state.index < 4) {
+        state.index += 1;
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    }
+
+    function buildPlan() {
+      const plans = [];
+      const mins = state.wrongs.length === 0 ? 15 : 20 + state.wrongs.length * 5;
+      plans.push(`<strong>今日总时长约 ${mins} 分钟</strong>｜六年级上册 · 小学数学`);
+      if (state.wrongs.length === 0) {
+        plans.push("<strong>巩固</strong>：从分数混合运算或圆的面积中任选 3 题限时完成。");
+        plans.push("<strong>反思</strong>：写清今天用对的运算顺序或公式。");
+        plans.push("<strong>延伸</strong>：明天挑战百分数应用题两道。");
+        return plans;
+      }
+      const uniqueKp = [...new Set(state.wrongs.map((w) => w.kp))];
+      uniqueKp.slice(0, 3).forEach((kp, idx) => {
+        const sample = state.wrongs.find((w) => w.kp === kp);
+        plans.push(`<strong>任务 ${idx + 1} · ${kp}</strong>：针对错因「${sample.cause}」手写订正，再练 2 道同类题。`);
+      });
+      plans.push("<strong>收尾</strong>：口头讲清 1 道错题思路（2 分钟内）。");
+      return plans;
+    }
+
+    function renderResult() {
+      show(el.result);
+      el.scoreNum.textContent = String(state.correctCount);
+      el.weakList.innerHTML = "";
+      if (!state.wrongs.length) {
+        el.weakList.innerHTML = "<li>本轮无明显薄弱点。可再测一组或加大百分数、圆面积练习。</li>";
+      } else {
+        const map = {};
+        state.wrongs.forEach((w) => {
+          if (!map[w.kp]) map[w.kp] = { cause: w.cause, tip: w.tip, count: 0 };
+          map[w.kp].count += 1;
+        });
+        Object.keys(map).forEach((kp) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${kp}</strong>（${map[kp].cause}，错 ${map[kp].count} 题）<br/>${map[kp].tip}`;
+          el.weakList.appendChild(li);
+        });
+      }
+      el.planList.innerHTML = "";
+      buildPlan().forEach((line) => {
+        const li = document.createElement("li");
+        li.innerHTML = line;
+        el.planList.appendChild(li);
+      });
+    }
+
+    function planPlainText() {
+      const lines = [`【今日复习清单】六年级上册 · 小学数学`, `正确 ${state.correctCount}/5`];
+      if (state.wrongs.length) {
+        lines.push("薄弱点：" + [...new Set(state.wrongs.map((w) => w.kp))].join("、"));
+      }
+      buildPlan().forEach((html) => lines.push("· " + html.replace(/<[^>]+>/g, "")));
+      return lines.join("\n");
+    }
+
+    document.getElementById("startBtn").addEventListener("click", () => startQuiz(null));
+    document.getElementById("unitGroup").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-unit]");
+      if (!btn) return;
+      startQuiz(btn.getAttribute("data-unit"));
+    });
+    document.getElementById("nextBtn").addEventListener("click", nextStep);
+    document.getElementById("backSetupBtn").addEventListener("click", () => show(el.setup));
+    document.getElementById("retryBtn").addEventListener("click", () => startQuiz(state.unit));
+    document.getElementById("copyPlanBtn").addEventListener("click", async () => {
+      const text = planPlainText();
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = document.getElementById("copyPlanBtn");
+        btn.textContent = "已复制";
+        setTimeout(() => { btn.textContent = "复制复习清单"; }, 1600);
+      } catch (_) {
+        prompt("复制以下内容：", text);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>班级错题诊断库 · 多维表AI字段</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
+      --line: #d8cfc0; --accent: #0d7a6f; --accent-deep: #065a52;
+      --ai: #eef8f6; --shadow: 0 12px 40px rgba(26,43,60,.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: "Noto Sans SC", sans-serif; color: var(--ink);
+      background:
+        radial-gradient(900px 480px at 0% 0%, #dceeea, transparent 60%),
+        radial-gradient(700px 400px at 100% 0%, #f3e2d4, transparent 55%),
+        var(--bg);
+    }
+    .wrap { width: min(1200px, calc(100% - 24px)); margin: 0 auto; padding: 22px 0 40px; }
+    .brand {
+      font-family: "ZCOOL XiaoWei", serif; font-size: 1.55rem; color: var(--accent-deep);
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .brand i {
+      width: 12px; height: 12px; border-radius: 3px; background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(13,122,111,.15);
+    }
+    .desc { margin: 0 0 16px; color: var(--muted); line-height: 1.65; font-size: .93rem; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px;
+    }
+    .btn {
+      border: none; border-radius: 999px; padding: 10px 16px; font: inherit; font-weight: 700;
+      cursor: pointer; background: var(--accent); color: #fff;
+    }
+    .btn:hover { background: var(--accent-deep); }
+    .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+    .chip {
+      font-size: .82rem; color: var(--accent-deep); background: var(--ai);
+      border: 1px solid #b7ddd6; border-radius: 999px; padding: 6px 10px;
+    }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: var(--shadow); overflow: auto;
+    }
+    table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: .88rem; }
+    th, td {
+      border-bottom: 1px solid var(--line); padding: 10px 12px; text-align: left;
+      vertical-align: top; line-height: 1.55;
+    }
+    th {
+      position: sticky; top: 0; background: #f3eee4; z-index: 1; font-weight: 700;
+      white-space: nowrap;
+    }
+    th.ai { background: #dff1ed; color: var(--accent-deep); }
+    td.ai { background: var(--ai); }
+    tr:hover td { filter: brightness(0.99); }
+    .muted { color: var(--muted); }
+    .form {
+      margin-top: 16px; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 16px; padding: 16px; box-shadow: var(--shadow);
+    }
+    .form h3 { margin: 0 0 12px; font-size: 1.05rem; }
+    .grid {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; color: var(--muted); }
+    input, select, textarea {
+      border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; font: inherit; color: var(--ink);
+      background: #fff;
+    }
+    textarea { grid-column: 1 / -1; min-height: 70px; resize: vertical; }
+    .full { grid-column: 1 / -1; }
+    .views { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .views button {
+      border: 1px solid var(--line); background: #fff; border-radius: 10px;
+      padding: 8px 12px; font: inherit; cursor: pointer;
+    }
+    .views button.active { border-color: var(--accent); background: var(--ai); color: var(--accent-deep); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><i></i>班级错题诊断库</div>
+    <p class="desc">路径2 · 多维表 AI 字段演示。左侧为教师录入列，绿色列为 AI 自动生成：知识点、错因、难度、复习建议、巩固题。</p>
+
+    <div class="toolbar">
+      <button type="button" class="btn" id="runAi">一键运行全部 AI 字段</button>
+      <button type="button" class="btn ghost" id="exportBtn">导出当前表（CSV）</button>
+      <span class="chip">AI 字段已启用 × 5</span>
+    </div>
+
+    <div class="views" id="views">
+      <button type="button" class="active" data-view="all">全部错题</button>
+      <button type="button" data-view="kp">按知识点</button>
+      <button type="button" data-view="cause">按错因</button>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead>
+          <tr>
+            <th>学生</th><th>班级</th><th>年级</th><th>学科</th>
+            <th>错题原文</th><th>学生作答</th>
+            <th class="ai">AI·知识点</th>
+            <th class="ai">AI·错因</th>
+            <th class="ai">AI·难度</th>
+            <th class="ai">AI·复习建议</th>
+            <th class="ai">AI·巩固题</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="form">
+      <h3>新增一条错题（保存后自动跑 AI 字段）</h3>
+      <div class="grid" id="addForm">
+        <label>学生姓名<input id="fName" value="新同学" /></label>
+        <label>班级<input id="fClass" value="六(1)班" /></label>
+        <label>年级
+          <select id="fGrade">
+            <option>小学六年级</option>
+            <option>小学五年级</option>
+            <option>初一</option>
+          </select>
+        </label>
+        <label>学科
+          <select id="fSubject">
+            <option>数学</option>
+            <option>语文</option>
+            <option>英语</option>
+          </select>
+        </label>
+        <label class="full">错题原文<textarea id="fQ" placeholder="题目全文"></textarea></label>
+        <label class="full">学生作答<input id="fA" placeholder="学生当时的答案" /></label>
+      </div>
+      <div class="toolbar" style="margin-top:12px;margin-bottom:0;">
+        <button type="button" class="btn" id="addBtn">添加并 AI 生成</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const seed = [
+      { name: "张一", cls: "六(1)班", grade: "小学六年级", subject: "数学", q: "小明有3/4米彩带，用去2/5，还剩多少米？", a: "1/20米" },
+      { name: "李二", cls: "六(1)班", grade: "小学六年级", subject: "数学", q: "圆半径3cm，求周长（π=3.14）。", a: "用了面积公式πr²" },
+      { name: "王三", cls: "六(2)班", grade: "小学六年级", subject: "数学", q: "上衣原价200元，打八折后多少元？", a: "240元" },
+      { name: "赵四", cls: "六(1)班", grade: "小学六年级", subject: "数学", q: "计算：2/3 × 3/4", a: "6/12（未约分）" },
+      { name: "钱五", cls: "六(3)班", grade: "小学六年级", subject: "数学", q: "把比2:8化成最简整数比", a: "2:8" },
+      { name: "孙六", cls: "六(2)班", grade: "小学六年级", subject: "数学", q: "圆半径4cm，求面积（π=3.14）", a: "12.56" },
+      { name: "周七", cls: "六(1)班", grade: "小学六年级", subject: "数学", q: "3/5 ÷ 2/5 = ?", a: "6/25" },
+      { name: "吴八", cls: "六(2)班", grade: "小学六年级", subject: "数学", q: "把3/4写成百分数", a: "34%" },
+      { name: "郑九", cls: "六(3)班", grade: "小学六年级", subject: "数学", q: "计算：1/2 + 1/3 × 1/4", a: "5/12" },
+      { name: "冯十", cls: "六(1)班", grade: "小学六年级", subject: "数学", q: "一本书48元打八折是多少？", a: "3.84元" }
+    ];
+
+    let rows = seed.map((r) => ({ ...r, ai: null }));
+    let view = "all";
+
+    function aiFill(row) {
+      const text = row.q + " " + row.a;
+      let kp = "综合练习", cause = "概念理解", level = "中";
+      let advice = "回顾本题条件与所求，订正步骤并再练两道同类题。";
+      let drills = "巩固题1：请自编一道同知识点题。\n巩固题2：把错题条件改数字再做一遍。";
+
+      if (/分数|\/|彩带|×|÷/.test(text)) {
+        if (/用去其中|几分之几|×/.test(text) && /用去了多少|求.*多少米/.test(text) && !/还剩/.test(text)) {
+          kp = "分数乘法"; cause = "概念理解"; level = "中";
+          advice = "求一个数的几分之几用乘法。先判断题意，再列式约分。";
+          drills = "巩固题1：油4/5升，用去1/3，用去多少升？\n巩固题2：绳5/6米，剪去其中2/5，剪去多少米？";
+        } else if (/还剩|减|通分|1\/20/.test(text)) {
+          kp = "异分母分数加减"; cause = "计算失误"; level = "中";
+          advice = "异分母先通分再加减。把通分过程写完整后再减。";
+          drills = "巩固题1：5/6 − 1/4\n巩固题2：2/3 + 1/6";
+        } else if (/÷|除以|倒数/.test(text)) {
+          kp = "分数除法"; cause = "方法选择"; level = "中";
+          advice = "除以一个数等于乘它的倒数，先写倒数再乘。";
+          drills = "巩固题1：3/4 ÷ 2/5\n巩固题2：倒数是5/8的数是多少？";
+        } else if (/×/.test(text) && /未约分|约分/.test(text)) {
+          kp = "分数乘法（约分）"; cause = "计算失误"; level = "易";
+          advice = "乘完一定要约成最简分数，可先约分再乘更简便。";
+          drills = "巩固题1：4/5 × 5/8（先约分）\n巩固题2：2/9 × 3/4";
+        } else if (/混合|\+|×/.test(text)) {
+          kp = "分数四则混合运算"; cause = "方法选择"; level = "难";
+          advice = "先乘除后加减。先标运算顺序再动笔。";
+          drills = "巩固题1：1/2 + 1/3 × 1/4\n巩固题2：(1/2+1/3)×6/5";
+        } else {
+          kp = "分数运算"; cause = "概念理解"; level = "中";
+        }
+      } else if (/圆|周长|面积|半径|π/.test(text)) {
+        if (/周长/.test(text) || /πr²|面积公式/.test(text)) {
+          kp = "圆的周长"; cause = "方法选择"; level = "中";
+          advice = "周长用 C=2πr，不要和面积 πr² 混淆。";
+          drills = "巩固题1：半径5cm求周长（π=3.14）\n巩固题2：直径10cm求周长";
+        } else {
+          kp = "圆的面积"; cause = "概念理解"; level = "中";
+          advice = "面积 S=πr²，先把半径平方再乘π。";
+          drills = "巩固题1：半径4cm求面积（π=3.14）\n巩固题2：半径2cm求面积";
+        }
+      } else if (/百分|折扣|八折|%/.test(text)) {
+        kp = "百分数应用"; cause = "概念理解"; level = "易";
+        advice = "几折改成百分数后，现价=原价×折扣。验算现价应小于原价。";
+        drills = "巩固题1：160元打七五折\n巩固题2：把3/5写成百分数";
+      } else if (/比|：|化简/.test(text)) {
+        kp = "比的化简"; cause = "计算失误"; level = "易";
+        advice = "前后项同除最大公约数，化成最简整数比。";
+        drills = "巩固题1：12:18化简\n巩固题2：20与5的比";
+      }
+
+      return { kp, cause, level, advice, drills };
+    }
+
+    function ensureAi(row) {
+      if (!row.ai) row.ai = aiFill(row);
+      return row;
+    }
+
+    function render() {
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+      let list = rows.map(ensureAi);
+
+      if (view === "kp") {
+        list = [...list].sort((a, b) => a.ai.kp.localeCompare(b.ai.kp, "zh"));
+      } else if (view === "cause") {
+        list = [...list].sort((a, b) => a.ai.cause.localeCompare(b.ai.cause, "zh"));
+      }
+
+      list.forEach((r) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${esc(r.name)}</td>
+          <td>${esc(r.cls)}</td>
+          <td>${esc(r.grade)}</td>
+          <td>${esc(r.subject)}</td>
+          <td>${esc(r.q)}</td>
+          <td>${esc(r.a)}</td>
+          <td class="ai"><strong>${esc(r.ai.kp)}</strong></td>
+          <td class="ai">${esc(r.ai.cause)}</td>
+          <td class="ai">${esc(r.ai.level)}</td>
+          <td class="ai">${esc(r.ai.advice)}</td>
+          <td class="ai" style="white-space:pre-wrap">${esc(r.ai.drills)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    document.getElementById("runAi").addEventListener("click", () => {
+      rows.forEach((r) => { r.ai = aiFill(r); });
+      render();
+    });
+
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const row = {
+        name: document.getElementById("fName").value.trim() || "新同学",
+        cls: document.getElementById("fClass").value.trim() || "六(1)班",
+        grade: document.getElementById("fGrade").value,
+        subject: document.getElementById("fSubject").value,
+        q: document.getElementById("fQ").value.trim(),
+        a: document.getElementById("fA").value.trim(),
+        ai: null
+      };
+      if (!row.q) { alert("请填写错题原文"); return; }
+      row.ai = aiFill(row);
+      rows.unshift(row);
+      document.getElementById("fQ").value = "";
+      document.getElementById("fA").value = "";
+      render();
+    });
+
+    document.getElementById("views").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-view]");
+      if (!btn) return;
+      document.querySelectorAll("#views button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      view = btn.getAttribute("data-view");
+      render();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const header = ["学生","班级","年级","学科","错题原文","学生作答","知识点","错因","难度","复习建议","巩固题"];
+      const lines = [header.join(",")];
+      rows.map(ensureAi).forEach((r) => {
+        const cols = [r.name, r.cls, r.grade, r.subject, r.q, r.a, r.ai.kp, r.ai.cause, r.ai.level, r.ai.advice, r.ai.drills.replace(/\n/g, " | ")];
+        lines.push(cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","));
+      });
+      const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "班级错题诊断库.csv";
+      a.click();
+    });
+
+    render();
+  </script>
+</body>
+</html>
