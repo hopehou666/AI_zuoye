@@ -21,7 +21,7 @@
         radial-gradient(700px 400px at 100% 0%, #f3e2d4, transparent 55%),
         var(--bg);
     }
-    .wrap { width: min(720px, calc(100% - 24px)); margin: 0 auto; padding: 20px 0 48px; }
+    .wrap { width: min(720px, calc(100% - 24px)); margin: 0 auto; padding: 20px 0 28px; }
     .home-link { color: var(--accent-deep); font-weight: 700; text-decoration: none; font-size: .9rem; }
     .brand {
       font-family: "ZCOOL XiaoWei", serif; font-size: 1.7rem; color: var(--accent-deep);
@@ -35,105 +35,113 @@
     .desc { margin: 10px 0 16px; color: var(--muted); line-height: 1.65; font-size: .93rem; }
     .panel {
       background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
-      box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px;
+      box-shadow: var(--shadow); padding: 16px; margin-bottom: 12px;
     }
-    .step { font-size: .75rem; letter-spacing: .12em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
-    h2 { margin: 0 0 12px; font-size: 1.12rem; }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-    .btn { appearance: none; font: inherit; cursor: pointer; border-radius: 12px; border: none; padding: 10px 18px; background: var(--accent); color: #fff; font-weight: 700; }
+    .chat {
+      height: min(520px, 62vh); overflow: auto; display: flex; flex-direction: column; gap: 10px;
+      padding: 4px 2px 8px;
+    }
+    .msg { max-width: 92%; padding: 10px 12px; border-radius: 14px; line-height: 1.65; white-space: pre-wrap; }
+    .msg.bot { background: #eef8f6; border: 1px solid #b7ddd6; align-self: flex-start; }
+    .msg.me { background: #fff; border: 1px solid var(--line); align-self: flex-end; }
+    .who { font-size: .75rem; font-weight: 700; color: var(--accent-deep); margin-bottom: 4px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+    .chip, .btn { appearance: none; font: inherit; cursor: pointer; border-radius: 12px; }
+    .chip { border: 1.5px solid var(--line); background: #fff; padding: 7px 12px; color: var(--ink); }
+    .chip:hover { border-color: var(--accent); color: var(--accent-deep); }
+    .composer { display: flex; gap: 8px; margin-top: 10px; }
+    .composer input {
+      flex: 1; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; font: inherit; background: #fff;
+    }
+    .btn { border: none; padding: 10px 16px; background: var(--accent); color: #fff; font-weight: 700; }
     .btn:hover { background: var(--accent-deep); }
-    .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
-    .hint { font-size: .88rem; color: var(--muted); margin: 0 0 12px; line-height: 1.6; }
-    .verdict { padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; line-height: 1.65; font-weight: 700; }
-    .verdict.ok { background: #e8f6ee; color: var(--ok); border: 1px solid #b7e0c7; }
-    .verdict.mid { background: #fff7e8; color: #9a6400; border: 1px solid #efd8a6; }
-    .verdict.bad { background: #fceeee; color: var(--bad); border: 1px solid #efc2c2; }
-    .report { white-space: pre-wrap; line-height: 1.75; }
-    .hidden { display: none !important; }
-    label.field { display: block; color: var(--muted); font-size: .82rem; margin: 0 0 6px; }
-    input.line {
-      width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
-      padding: 10px; font: inherit; background: #fff; color: var(--ink);
+    details.prompt {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px 16px;
     }
-    .eq {
-      display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;
+    details.prompt summary { cursor: pointer; font-weight: 700; color: var(--accent-deep); }
+    details.prompt pre {
+      white-space: pre-wrap; font-size: .82rem; line-height: 1.6; color: var(--muted);
+      margin: 10px 0 0; font-family: inherit;
     }
-    .eq .cell { flex: 1 1 120px; min-width: 96px; }
-    .eq .op {
-      flex: 0 0 auto; font-size: 1.6rem; font-weight: 700; color: var(--accent-deep);
-      line-height: 1; padding-bottom: 10px;
-    }
-    .eq input.line { text-align: center; font-size: 1.15rem; }
-    .actions { display: flex; gap: 8px; margin-top: 14px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题学伴</div>
-    <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">按固定格式填写错题：被除数 ÷ 除数 = 学生答案。学伴先判断对错，再分析分数除法相关知识点掌握得怎么样。</p>
+    <span class="tag">六年级数学 · 智能体</span>
+    <p class="desc">阶段一智能体。可以问分数除法知识点，也可以输入题目和学生答案，请学伴批改并分析掌握程度。</p>
 
     <section class="panel">
-      <div class="step">01 输入错题</div>
-      <h2>按三个框填写</h2>
-      <p class="hint">每个框只填一个数。分数写成 4/7，整数写成 3。做对的题也可以填，用来确认掌握情况。</p>
-      <div class="eq">
-        <div class="cell">
-          <label class="field" for="leftBox">被除数</label>
-          <input class="line" id="leftBox" type="text" inputmode="text" placeholder="4/7" />
-        </div>
-        <div class="op" aria-hidden="true">÷</div>
-        <div class="cell">
-          <label class="field" for="rightBox">除数</label>
-          <input class="line" id="rightBox" type="text" inputmode="text" placeholder="3" />
-        </div>
-        <div class="op" aria-hidden="true">=</div>
-        <div class="cell">
-          <label class="field" for="ansBox">学生答案</label>
-          <input class="line" id="ansBox" type="text" inputmode="text" placeholder="12/7" />
-        </div>
+      <div class="chat" id="chat"></div>
+      <div class="chips">
+        <button type="button" class="chip" data-q="分数除以整数怎么算？">问：分数除以整数怎么算？</button>
+        <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
+        <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
-      <div class="actions">
-        <button type="button" class="btn" id="gradeBtn">批改</button>
-        <button type="button" class="btn ghost" id="clearBtn">清空</button>
+      <div class="composer">
+        <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
+        <button type="button" class="btn" id="sendBtn">发送</button>
       </div>
     </section>
 
-    <section class="panel hidden" id="resultPanel">
-      <div class="step">02 批改结果</div>
-      <h2>对错判断与掌握分析</h2>
-      <div id="verdict" class="verdict"></div>
-      <div id="report" class="report"></div>
-    </section>
+    <details class="prompt">
+      <summary>系统提示词（交作业用）</summary>
+      <pre id="promptText"></pre>
+    </details>
   </div>
 
   <script>
+    const SYSTEM_PROMPT = `你是「分数除法习题学伴」，只服务六年级数学里的一个知识点：分数除法。
+
+学生可以做两件事：
+1. 问知识点：你用六年级能听懂的话讲解。
+2. 输入题目和学生答案：你帮批改，写出正确答案，判断对错，并分析掌握程度。
+
+年级、学科已经固定为六年级数学，不必再问。
+
+## 一、问知识点时怎么答
+学生问「什么是倒数」「分数除以整数怎么算」「为什么要乘倒数」「整数除以分数怎么做」等：
+- 先写知识点名称，例如：分数除法（分数÷整数）。
+- 再用 3～6 句把方法讲清楚，配 1 个小例子和完整计算过程。
+- 最后问一句：要不要出一道题练一练，或把你的题目和答案发给我批改？
+
+必须讲清的核心方法：
+除以一个数，等于乘它的倒数。
+- 分数÷整数：把整数写成 1/整数 再乘。不要把整数乘到分子上。例如 4/7 ÷ 3 = 4/7 × 1/3 = 4/21。
+- 整数÷分数：整数乘这个分数的倒数。例如 3 ÷ 3/4 = 3 × 4/3 = 4。
+- 分数÷分数：把除数的分子、分母对调后再乘，能约分先约分。例如 3/4 ÷ 1/2 = 3/4 × 2/1 = 3/2。
+
+## 二、输入题目帮批改时怎么答
+先自己把题算对，再按固定结构输出：题目、学生答案、正确答案、判断、知识点、知识点说明、掌握程度、掌握分析、计算过程、订正引导、巩固一下。
+
+## 三、风格
+像六年级数学老师：鼓励、短句、把话说明白。问知识点时不套批改模板。批改时必须出现正确答案和判断。`;
+
     const BANK = [
-      { key: "3/5 ÷ 2/5", tip: "除以一个数等于乘它的倒数。", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分得最简分数。"], drills: ["3/4 ÷ 1/2", "5/6 ÷ 2/3"] },
-      { key: "3/4 ÷ 1/2", tip: "除以一个数等于乘它的倒数。", guide: ["1/2 的倒数是 2。", "3/4 × 2/1。", "约分成 3/2。"], drills: ["2/3 ÷ 1/4", "5/8 ÷ 1/2"] },
-      { key: "1 ÷ 2/5", tip: "1 乘除数的倒数。", guide: ["2/5 的倒数是 5/2。", "1 × 5/2。", "结果是 5/2。"], drills: ["1 ÷ 3/4", "1 ÷ 1/8"] },
-      { key: "2/3 ÷ 4", tip: "除以整数 4，等于乘 1/4。", guide: ["4 的倒数是 1/4。", "2/3 × 1/4。", "约分成 1/6。"], drills: ["3/5 ÷ 3", "5/6 ÷ 5"] },
-      { key: "4/7 ÷ 3", tip: "除以整数 3，等于乘 1/3，不是把 3 乘到分子上。", guide: ["3 的倒数是 1/3。", "4/7 × 1/3。", "得到 4/21。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] },
-      { key: "5/6 ÷ 2/3", tip: "先写倒数再乘，能约分先约。", guide: ["2/3 的倒数是 3/2。", "5/6 × 3/2，6 和 3 先约分。", "得到 5/4。"], drills: ["4/9 ÷ 2/3", "7/8 ÷ 7/12"] },
-      { key: "3 ÷ 3/4", tip: "整数除以分数 = 乘倒数。", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] }
+      { key: "3/5 ÷ 2/5", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分得最简分数。"], drills: ["3/4 ÷ 1/2", "5/6 ÷ 2/3"] },
+      { key: "3/4 ÷ 1/2", guide: ["1/2 的倒数是 2。", "3/4 × 2/1。", "约分成 3/2。"], drills: ["2/3 ÷ 1/4", "5/8 ÷ 1/2"] },
+      { key: "1 ÷ 2/5", guide: ["2/5 的倒数是 5/2。", "1 × 5/2。", "结果是 5/2。"], drills: ["1 ÷ 3/4", "1 ÷ 1/8"] },
+      { key: "2/3 ÷ 4", guide: ["4 的倒数是 1/4。", "2/3 × 1/4。", "约分成 1/6。"], drills: ["3/5 ÷ 3", "5/6 ÷ 5"] },
+      { key: "4/7 ÷ 3", guide: ["3 的倒数是 1/3。", "4/7 × 1/3。", "得到 4/21。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] },
+      { key: "5/6 ÷ 2/3", guide: ["2/3 的倒数是 3/2。", "5/6 × 3/2，6 和 3 先约分。", "得到 5/4。"], drills: ["4/9 ÷ 2/3", "7/8 ÷ 7/12"] },
+      { key: "3 ÷ 3/4", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] }
     ];
 
-    const el = {
-      leftBox: document.getElementById("leftBox"),
-      rightBox: document.getElementById("rightBox"),
-      ansBox: document.getElementById("ansBox"),
-      resultPanel: document.getElementById("resultPanel"),
-      verdict: document.getElementById("verdict"),
-      report: document.getElementById("report")
-    };
+    const HELLO = "你好！我是「分数除法习题学伴」，只练六年级数学的分数除法。\n\n你可以：\n1. 问知识点，比如：分数除以整数怎么算？\n2. 把题目和你的答案发给我，我帮你批改。\n\n例如：4/7 ÷ 3，我写 12/7";
+
+    document.getElementById("promptText").textContent = SYSTEM_PROMPT;
+
+    const chatEl = document.getElementById("chat");
+    const talkEl = document.getElementById("talk");
+    const pending = { left: "", right: "" };
 
     function gcd(a, b) {
       a = Math.abs(a); b = Math.abs(b);
       while (b) { const t = a % b; a = b; b = t; }
       return a || 1;
     }
-
     function simp(n, d) {
       if (!d) return "";
       const g = gcd(n, d);
@@ -141,178 +149,75 @@
       if (d < 0) { n = -n; d = -d; }
       return d === 1 ? String(n) : n + "/" + d;
     }
-
     function parseFrac(s) {
-      const raw = String(s || "").replace(/\s+/g, "").replace(/又/g, "+");
-      const mixed = raw.match(/^(-?\d+)\+(\d+)\/(\d+)$/);
-      if (mixed) {
-        const whole = +mixed[1], n = +mixed[2], d = +mixed[3];
-        if (!d) return null;
-        return { n: whole * d + (whole < 0 ? -n : n), d };
-      }
+      const raw = String(s || "").replace(/\s+/g, "");
       const m = raw.match(/^(-?\d+)(?:\/(-?\d+))?$/);
       if (!m) return null;
       return { n: +m[1], d: m[2] ? +m[2] : 1 };
     }
-
-    function showFrac(f) {
-      if (!f) return "";
-      return simp(f.n, f.d);
-    }
-
-    function sameFrac(a, b) {
-      if (!a || !b || !a.d || !b.d) return false;
-      return a.n * b.d === b.n * a.d;
-    }
-
-    function boxText(s) {
-      return String(s || "").replace(/\s+/g, "").replace(/[÷／]/g, "/");
-    }
+    function showFrac(f) { return f ? simp(f.n, f.d) : ""; }
+    function sameFrac(a, b) { return !!(a && b && a.d && b.d && a.n * b.d === b.n * a.d); }
 
     function describeKp(left, right) {
       if (left.d !== 1 && right.d === 1) {
-        return {
-          name: "分数除法（分数÷整数）",
-          text: "本题练的是「分数除以整数」。方法：除以一个整数，等于乘这个整数的倒数。先把整数写成 1/整数，再和前面的分数相乘，最后约成最简分数。不要把整数直接乘到分子上。"
-        };
+        return { name: "分数除法（分数÷整数）", text: "本题练的是「分数除以整数」。方法：除以一个整数，等于乘这个整数的倒数。先把整数写成 1/整数，再和前面的分数相乘，最后约成最简分数。不要把整数直接乘到分子上。" };
       }
       if (left.d === 1 && right.d !== 1) {
-        return {
-          name: "分数除法（整数÷分数）",
-          text: "本题练的是「整数除以分数」。方法：整数乘除数的倒数。先把分数的分子、分母对调，再和整数相乘，能约分先约分。"
-        };
+        return { name: "分数除法（整数÷分数）", text: "本题练的是「整数除以分数」。方法：整数乘除数的倒数。先把分数的分子、分母对调，再和整数相乘，能约分先约分。" };
       }
-      return {
-        name: "分数除法（分数÷分数）",
-        text: "本题练的是「分数除以分数」。方法：除以一个分数，等于乘它的倒数。先把除数的分子、分母对调，再和被除数相乘，能约分先约分。"
-      };
+      return { name: "分数除法（分数÷分数）", text: "本题练的是「分数除以分数」。方法：除以一个分数，等于乘它的倒数。先把除数的分子、分母对调后再乘，能约分先约分。" };
     }
 
     function diagnose(p) {
-      const L = parseFrac(p.leftShow);
-      const R = parseFrac(p.rightShow);
-      const ans = parseFrac(p.answer);
-      const S = p.stu;
-      if (p.ok) {
-        return {
-          level: "掌握较好",
-          cause: "方法正确",
-          detail: "会把除法改成乘倒数，并能得到正确得数，说明「分数除法」基本过关。"
-        };
-      }
-      if (!S) {
-        return {
-          level: "还不能判断",
-          cause: "缺少作答",
-          detail: "先补上学生答案，才能判断对错并分析掌握程度。"
-        };
-      }
+      const L = parseFrac(p.leftShow), R = parseFrac(p.rightShow), ans = parseFrac(p.answer), S = p.stu;
+      if (p.ok) return { level: "掌握较好", cause: "方法正确", detail: "会把除法改成乘倒数，并能得到正确得数，说明「分数除法」基本过关。" };
+      if (!S) return { level: "还不能判断", cause: "缺少作答", detail: "先补上学生答案，才能判断对错并分析掌握程度。" };
       const mul = { n: L.n * R.n, d: L.d * R.d };
       const mulNum = { n: L.n * R.n, d: 1 };
       const flipAns = { n: ans.d, d: ans.n };
       const onlyNum = { n: L.n, d: 1 };
       const subDen = R.d === 1 ? { n: L.d - R.n, d: 1 } : null;
-      const keepLeft = L;
-      if (sameFrac(S, mul) || sameFrac(S, mulNum)) {
-        return {
-          level: "方法掌握不牢",
-          cause: "方法选择",
-          detail: "学生把整数乘到了分子上，没有把除数写成倒数。分数除法的核心是：除以一个数 = 乘它的倒数。"
-        };
-      }
-      if (subDen && sameFrac(S, onlyNum) && sameFrac(S, subDen)) {
-        return {
-          level: "概念理解不足",
-          cause: "概念理解",
-          detail: "学生写了 " + p.stuShow + "。常见原因有两种：只抄了分子；或把分母和除数做减法。这两种都不是分数除法。"
-        };
-      }
-      if (sameFrac(S, onlyNum)) {
-        return {
-          level: "概念理解不足",
-          cause: "概念理解",
-          detail: "学生只写下了被除数的分子，没有完成「乘倒数」。分数÷整数，要把整数写成倒数再乘。"
-        };
-      }
-      if (subDen && sameFrac(S, subDen)) {
-        return {
-          level: "概念理解不足",
-          cause: "概念理解",
-          detail: "学生可能把分母和除数做了减法。分数除法不能用减法代替，应先找倒数再乘。"
-        };
-      }
-      if (sameFrac(S, keepLeft)) {
-        return {
-          level: "概念理解不足",
-          cause: "概念理解",
-          detail: "学生几乎没有做除法，只是把原分数抄下来了。要先把除数变成倒数，再相乘。"
-        };
-      }
-      if (sameFrac(S, flipAns)) {
-        return {
-          level: "概念易混淆",
-          cause: "方法选择",
-          detail: "学生可能把整道除法的结果又取了一次倒数。倒数只应对着除数来取。"
-        };
-      }
-      return {
-        level: "还需巩固",
-        cause: "方法或计算",
-        detail: "学生答案和标准得数不一致。请先确认是否改成了乘倒数，再检查乘法和约分。"
-      };
+      if (sameFrac(S, mul) || sameFrac(S, mulNum)) return { level: "方法掌握不牢", cause: "方法选择", detail: "学生把整数乘到了分子上，没有把除数写成倒数。分数除法的核心是：除以一个数 = 乘它的倒数。" };
+      if (subDen && sameFrac(S, onlyNum) && sameFrac(S, subDen)) return { level: "概念理解不足", cause: "概念理解", detail: "学生写了 " + p.stuShow + "。常见原因有两种：只抄了分子；或把分母和整数做减法。这两种都不是分数除法。" };
+      if (sameFrac(S, onlyNum)) return { level: "概念理解不足", cause: "概念理解", detail: "学生只写下了被除数的分子，没有完成「乘倒数」。" };
+      if (subDen && sameFrac(S, subDen)) return { level: "概念理解不足", cause: "概念理解", detail: "学生可能把分母和除数做了减法。分数除法不能用减法代替。" };
+      if (sameFrac(S, L)) return { level: "概念理解不足", cause: "概念理解", detail: "学生几乎没有做除法，只是把原分数抄下来了。" };
+      if (sameFrac(S, flipAns)) return { level: "概念易混淆", cause: "方法选择", detail: "学生可能把整道除法的结果又取了一次倒数。倒数只应对着除数来取。" };
+      return { level: "还需巩固", cause: "方法或计算", detail: "学生答案和标准得数不一致。请先确认是否改成了乘倒数，再检查乘法和约分。" };
     }
 
-    function parseInput(leftText, rightText, ansText) {
-      const left = parseFrac(boxText(leftText));
-      const right = parseFrac(boxText(rightText));
-      const stuRaw = boxText(ansText);
+    function buildGrade(left, right, stuRaw) {
       if (!left || !right || !right.n) return null;
-      const leftShow = showFrac(left);
-      const rightShow = showFrac(right);
+      const leftShow = showFrac(left), rightShow = showFrac(right);
       const answer = simp(left.n * right.d, left.d * right.n);
       const rec = simp(right.d, right.n);
-      const stu = parseFrac(stuRaw.replace(/[÷／]/g, "/"));
+      const stu = parseFrac(stuRaw);
       const key = leftShow + " ÷ " + rightShow;
-      const tip = BANK.find((x) => x.key === key) || {
-        tip: "除以一个数等于乘它的倒数。分数÷整数，要把整数写成倒数再乘。",
-        guide: ["找出除数。", "写成乘除数的倒数。", "约分成最简分数。"],
-        drills: ["2/5 ÷ 3", "5/8 ÷ 4"]
-      };
-      const parsed = {
-        qShow: leftShow + " ÷ " + rightShow,
-        leftShow,
-        rightShow,
-        rec,
-        answer,
+      const tip = BANK.find((x) => x.key === key) || { guide: ["找出除数。", "写成乘除数的倒数。", "约分成最简分数。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] };
+      const p = {
+        qShow: key, leftShow, rightShow, rec, answer,
         stuShow: stuRaw ? (stu ? showFrac(stu) : stuRaw) : "",
-        stu,
-        ok: !!(stu && sameFrac(stu, parseFrac(answer))),
-        kp: describeKp(left, right),
-        tip: tip.tip,
-        guide: tip.guide,
-        drills: tip.drills
+        stu, ok: !!(stu && sameFrac(stu, parseFrac(answer))),
+        kp: describeKp(left, right), guide: tip.guide, drills: tip.drills
       };
-      parsed.diag = diagnose(parsed);
-      return parsed;
+      p.diag = diagnose(p);
+      return p;
     }
 
     function reportOf(p) {
       const judge = !p.stuShow ? "还没有填写学生答案" : (p.ok ? "正确" : "错误");
-      const lines = [
+      return [
         "【题目】" + p.qShow,
         "【学生答案】" + (p.stuShow || "未填写"),
         "【正确答案】" + p.answer,
-        "【判断】学生答案" + judge,
+        "【判断】" + judge,
         "",
         "【知识点】" + p.kp.name,
         "【知识点说明】" + p.kp.text,
         "【掌握程度】" + p.diag.level + "（可能原因：" + p.diag.cause + "）",
         "【掌握分析】" + p.diag.detail,
         "",
-        "【计算过程】",
-        p.qShow + " = " + p.leftShow + " × " + p.rec + " = " + p.answer,
-        "",
-        "【提醒】" + p.tip,
+        "【计算过程】" + p.qShow + " = " + p.leftShow + " × " + p.rec + " = " + p.answer,
         "",
         "【订正引导】",
         "1. " + p.guide[0],
@@ -322,48 +227,82 @@
         "【巩固一下】",
         "1. " + p.drills[0],
         "2. " + p.drills[1]
-      ];
-      return lines.join("\n");
+      ].join("\n");
     }
 
-    function grade() {
-      const parsed = parseInput(el.leftBox.value, el.rightBox.value, el.ansBox.value);
-      if (!parsed) {
-        el.resultPanel.classList.remove("hidden");
-        el.verdict.className = "verdict mid";
-        el.verdict.textContent = "请按三个框填写。例如 4/7  ÷  3  =  12/7。";
-        el.report.textContent = "";
-        return;
+    function parseProblem(text) {
+      const t = String(text || "").replace(/\s+/g, "").replace(/[÷:／]/g, "÷").replace(/＝/g, "=");
+      const m = t.match(/(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)(?:(?:=|我写了?|答案是|答)(-?\d+(?:\/-?\d+)?))?/);
+      if (!m) return null;
+      return { left: parseFrac(m[1]), right: parseFrac(m[2]), stu: m[3] || "" };
+    }
+
+    function knowledgeReply(text) {
+      const t = text.replace(/\s+/g, "");
+      if (/加减|通分|小数乘法|应用题/.test(t) && !/除法|倒数/.test(t)) {
+        return "这不是本学伴的范围。我只讲六年级数学的「分数除法」。你可以问：分数除以整数怎么算？也可以把分数除法题目和答案发给我批改。";
       }
-      el.resultPanel.classList.remove("hidden");
-      if (!parsed.stuShow) {
-        el.verdict.className = "verdict mid";
-        el.verdict.textContent = "题目已读出。请补上学生答案后再判断对错和掌握程度。正确答案是 " + parsed.answer + "。";
-      } else if (parsed.ok) {
-        el.verdict.className = "verdict ok";
-        el.verdict.textContent = "判断：学生答案正确。正确答案是 " + parsed.answer + "。知识点掌握程度：" + parsed.diag.level + "。";
-      } else {
-        el.verdict.className = "verdict bad";
-        el.verdict.textContent = "判断：学生答案错误。正确答案是 " + parsed.answer + "，学生写的是 " + parsed.stuShow + "。知识点掌握程度：" + parsed.diag.level + "。";
+      if (/倒数/.test(t) && !/除法|除以|怎么算/.test(t)) {
+        return "【知识点】倒数\n\n互为倒数的两个数，乘积是 1。把分数的分子、分母对调，就得到它的倒数。整数 3 可以看成 3/1，倒数就是 1/3。\n\n例子：4/7 的倒数是 7/4；2 的倒数是 1/2。\n\n分数除法就是用倒数：除以一个数，等于乘它的倒数。\n\n要把题目和你的答案发给我批改吗？";
       }
-      el.report.textContent = reportOf(parsed);
-      el.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (/整数除以分数|整数÷分数/.test(t)) {
+        return "【知识点】分数除法（整数÷分数）\n\n整数除以分数，等于整数乘这个分数的倒数。先把分数的分子、分母对调，再和整数相乘，能约分先约分。\n\n例子：3 ÷ 3/4 = 3 × 4/3 = 4。\n\n要把你的题目和答案发给我批改吗？";
+      }
+      if (/分数除以分数|分数÷分数/.test(t)) {
+        return "【知识点】分数除法（分数÷分数）\n\n除以一个分数，等于乘它的倒数。先把除数的分子、分母对调，再和被除数相乘，能约分先约分。\n\n例子：3/4 ÷ 1/2 = 3/4 × 2/1 = 3/2。\n\n要把你的题目和答案发给我批改吗？";
+      }
+      if (/分数除以整数|分数÷整数|怎么算|怎么做|怎样算|方法|知识点|为什么|乘倒数/.test(t)) {
+        return "【知识点】分数除法（分数÷整数）\n\n除以一个数，等于乘它的倒数。分数除以整数时，先把整数写成 1/整数，再和前面的分数相乘，最后约成最简分数。不要把整数直接乘到分子上。\n\n例子：4/7 ÷ 3 = 4/7 × 1/3 = 4/21。\n如果把 3 乘到分子上，会错写成 12/7。\n\n还可以问「整数除以分数怎么做」「分数除以分数怎么做」。也可以直接发题目给我批改。";
+      }
+      return "";
     }
 
-    function clearAll() {
-      el.leftBox.value = "";
-      el.rightBox.value = "";
-      el.ansBox.value = "";
-      el.resultPanel.classList.add("hidden");
-      el.leftBox.focus();
+    function reply(text) {
+      const onlyAns = parseFrac(String(text || "").replace(/\s+/g, "").replace(/[÷／]/g, "/"));
+      if (pending.left && pending.right && onlyAns && !/[÷/=]/.test(text.replace(/\s+/g, ""))) {
+        const p = buildGrade(pending.left, pending.right, showFrac(onlyAns));
+        pending.left = pending.right = "";
+        return p ? reportOf(p) : "这一题我没有算清，请写成 4/7 ÷ 3，我写 12/7。";
+      }
+      const know = knowledgeReply(text);
+      if (know) return know;
+      const hit = parseProblem(text);
+      if (hit && hit.left && hit.right) {
+        if (!hit.stu) {
+          pending.left = hit.left;
+          pending.right = hit.right;
+          return "题目我记下了：" + showFrac(hit.left) + " ÷ " + showFrac(hit.right) + "。请把你的答案发给我，我再帮你批改。";
+        }
+        pending.left = pending.right = "";
+        const p = buildGrade(hit.left, hit.right, hit.stu);
+        return p ? reportOf(p) : "算式我还没读清，请写成 4/7 ÷ 3，我写 12/7。";
+      }
+      return "请问分数除法知识点，或把题目和你的答案发给我。\n例如：分数除以整数怎么算？\n例如：4/7 ÷ 3，我写 12/7";
     }
 
-    document.getElementById("gradeBtn").addEventListener("click", grade);
-    document.getElementById("clearBtn").addEventListener("click", clearAll);
-    [el.leftBox, el.rightBox, el.ansBox].forEach((box) => {
-      box.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") grade();
-      });
+    function addMsg(role, text) {
+      const box = document.createElement("div");
+      box.className = "msg " + (role === "me" ? "me" : "bot");
+      box.innerHTML = '<div class="who">' + (role === "me" ? "学生" : "学伴") + "</div>";
+      box.appendChild(document.createTextNode(text));
+      chatEl.appendChild(box);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function send(text) {
+      const t = String(text || "").trim();
+      if (!t) return;
+      addMsg("me", t);
+      addMsg("bot", reply(t));
+      talkEl.value = "";
+      talkEl.focus();
+    }
+
+    addMsg("bot", HELLO);
+    document.getElementById("sendBtn").addEventListener("click", () => send(talkEl.value));
+    talkEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(talkEl.value); });
+    document.querySelectorAll(".chip").forEach((btn) => {
+      btn.addEventListener("click", () => send(btn.getAttribute("data-q")));
     });
   </script>
 </body>
