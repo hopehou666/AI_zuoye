@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
@@ -41,34 +40,26 @@
     .step { font-size: .75rem; letter-spacing: .12em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
     h2 { margin: 0 0 12px; font-size: 1.12rem; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
-    .chip, .btn { appearance: none; font: inherit; cursor: pointer; border-radius: 12px; }
-    .chip { border: 1.5px solid var(--line); background: #fff; padding: 8px 14px; }
-    .chip.on { border-color: var(--accent); background: #eef8f6; color: var(--accent-deep); font-weight: 700; }
-    .lock { opacity: .7; cursor: default; }
-    .btn { border: none; padding: 10px 18px; background: var(--accent); color: #fff; font-weight: 700; }
+    .btn { appearance: none; font: inherit; cursor: pointer; border-radius: 12px; border: none; padding: 10px 18px; background: var(--accent); color: #fff; font-weight: 700; }
     .btn:hover { background: var(--accent-deep); }
     .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
-    .drop {
-      display: block; border: 1.5px dashed #b7ddd6; border-radius: 14px; background: #f7fbfa;
-      padding: 22px 16px; text-align: center; color: var(--muted); line-height: 1.65; cursor: pointer;
-    }
-    .drop input { display: none; }
-    .preview { max-width: 100%; max-height: 260px; margin-top: 12px; border-radius: 10px; }
-    .status { font-size: .88rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+    .hint { font-size: .88rem; color: var(--muted); margin: 0 0 12px; line-height: 1.6; }
     .verdict { padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; line-height: 1.65; font-weight: 700; }
     .verdict.ok { background: #e8f6ee; color: var(--ok); border: 1px solid #b7e0c7; }
     .verdict.mid { background: #fff7e8; color: #9a6400; border: 1px solid #efd8a6; }
     .verdict.bad { background: #fceeee; color: var(--bad); border: 1px solid #efc2c2; }
     .report { white-space: pre-wrap; line-height: 1.75; }
     .hidden { display: none !important; }
-    label.field { display: block; color: var(--muted); font-size: .82rem; margin: 10px 0 6px; }
-    textarea, input.line {
+    label.field { display: block; color: var(--muted); font-size: .82rem; margin: 0 0 6px; }
+    input.line {
       width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
       padding: 10px; font: inherit; background: #fff; color: var(--ink);
     }
-    textarea { min-height: 56px; resize: vertical; }
-    .expr { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
-    .expr input.line { flex: 1; }
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 560px) {
+      .grid.two { grid-template-columns: 1.2fr .8fr; }
+    }
+    .actions { display: flex; gap: 8px; margin-top: 14px; }
   </style>
 </head>
 <body>
@@ -76,76 +67,54 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题学伴</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">只练一个知识点：分数除法。把习题和解答拍在同一张图里上传，学伴自动批改，并分析你对分数除法的掌握程度。做对了也可以拍。</p>
+    <p class="desc">只练一个知识点：分数除法。手输入题目和学生答案，学伴当场算出正确答案，并判断对错。</p>
 
     <section class="panel">
-      <div class="step">01 拍照上传习题</div>
-      <h2>把题目和解答拍在同一张图里</h2>
-      <label class="drop">
-        点击拍照或从相册选择<br />印刷体更清楚；字迹模糊时可在下方改几个字。
-        <input id="file" type="file" accept="image/*" capture="environment" />
-        <img id="preview" class="preview hidden" alt="习题照片" />
-      </label>
-      <p class="status" id="ocrStatus">上传后将自动批改。手写认不清时，把算式打在下面一行即可。</p>
-      <label class="field" for="exprLine">算式（手写认不清时补这一行）</label>
-      <div class="expr">
-        <input class="line" id="exprLine" type="text" placeholder="例如：4/7 ÷ 3 = 12/7" />
-        <button type="button" class="btn" id="exprBtn">批改</button>
+      <div class="step">01 输入算式</div>
+      <h2>写出题目和学生答案</h2>
+      <p class="hint">分数用 4/7 这样写，除号用 ÷ 或 / 都可以。也可以一行写完：4/7 ÷ 3 = 12/7</p>
+      <div class="grid two">
+        <div>
+          <label class="field" for="qLine">题目</label>
+          <input class="line" id="qLine" type="text" placeholder="例如：4/7 ÷ 3" />
+        </div>
+        <div>
+          <label class="field" for="aLine">学生答案</label>
+          <input class="line" id="aLine" type="text" placeholder="例如：12/7" />
+        </div>
       </div>
-      <label class="field" for="ocrText">识别文字</label>
-      <textarea id="ocrText" placeholder="识别结果"></textarea>
+      <div class="actions">
+        <button type="button" class="btn" id="gradeBtn">批改</button>
+        <button type="button" class="btn ghost" id="clearBtn">清空</button>
+      </div>
     </section>
 
     <section class="panel hidden" id="resultPanel">
       <div class="step">02 批改结果</div>
-      <h2>分数除法掌握分析</h2>
+      <h2>对错判断与掌握分析</h2>
       <div id="verdict" class="verdict"></div>
       <div id="report" class="report"></div>
-      <div class="row" style="margin-top:14px;">
-        <button type="button" class="btn ghost" id="againBtn">再批改一张</button>
-      </div>
     </section>
   </div>
 
   <script>
     const BANK = [
-      { q: "计算：3/5 ÷ 2/5 = ？", answer: "3/2", aliases: ["1.5", "1又1/2"], kp: "分数除法", cause: "方法选择", tip: "除以一个数等于乘它的倒数。", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分得最简分数。"], drills: ["3/4 ÷ 1/2", "5/6 ÷ 2/3"] },
-      { q: "计算：3/4 ÷ 1/2 = ？", answer: "3/2", aliases: ["1.5"], kp: "分数除法", cause: "方法选择", tip: "除以一个数等于乘它的倒数。", guide: ["1/2 的倒数是 2。", "3/4 × 2/1。", "约分成 3/2。"], drills: ["2/3 ÷ 1/4", "5/8 ÷ 1/2"] },
-      { q: "计算：1 ÷ 2/5 = ？", answer: "5/2", aliases: ["2.5", "2又1/2"], kp: "分数除法", cause: "方法选择", tip: "1 乘除数的倒数。", guide: ["2/5 的倒数是 5/2。", "1 × 5/2。", "结果是 5/2。"], drills: ["1 ÷ 3/4", "1 ÷ 1/8"] },
-      { q: "计算：2/3 ÷ 4 = ？", answer: "1/6", aliases: ["2/12"], kp: "分数除法", cause: "方法选择", tip: "除以整数 4，等于乘 1/4。", guide: ["4 的倒数是 1/4。", "2/3 × 1/4。", "约分成 1/6。"], drills: ["3/5 ÷ 3", "5/6 ÷ 5"] },
-      { q: "计算：4/7 ÷ 3 = ？", answer: "4/21", aliases: ["4/21"], kp: "分数除法", cause: "方法选择", tip: "除以整数 3，等于乘 1/3，不是把 3 乘到分子上。", guide: ["3 的倒数是 1/3。", "4/7 × 1/3。", "得到 4/21。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] },
-      { q: "计算：5/6 ÷ 2/3 = ？", answer: "5/4", aliases: ["1.25", "1又1/4"], kp: "分数除法", cause: "计算失误", tip: "先写倒数再乘，能约分先约。", guide: ["2/3 的倒数是 3/2。", "5/6 × 3/2，6 和 3 先约分。", "得到 5/4。"], drills: ["4/9 ÷ 2/3", "7/8 ÷ 7/12"] },
-      { q: "计算：3 ÷ 3/4 = ？", answer: "4", aliases: ["4/1"], kp: "分数除法", cause: "方法选择", tip: "整数除以分数 = 乘倒数。", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] },
-      { q: "一个数的倒数是 4/7，这个数是？", answer: "7/4", aliases: ["1.75"], kp: "分数除法", cause: "概念理解", tip: "互为倒数的两数乘积是 1。", guide: ["倒数是 4/7。", "把分数倒过来。", "这个数是 7/4。"], drills: ["倒数是 5/8 的数是？", "倒数是 3 的数是？"] },
-      { q: "一瓶果汁 3/4 升，倒入容量 1/8 升的杯子，最多能倒满几杯？", answer: "6", aliases: ["6杯"], kp: "分数除法", cause: "概念理解", tip: "总量 ÷ 每份量 = 份数。", guide: ["求能倒几杯，用除法。", "3/4 ÷ 1/8。", "3/4 × 8/1 = 6。"], drills: ["4/5 米绳子，每段 1/10 米，可剪几段？", "5/6 升油，每瓶 1/3 升，能装几瓶？"] },
-      { q: "一段绳子长 4/5 米，每段剪 1/10 米，最多可剪几段？", answer: "8", aliases: ["8段"], kp: "分数除法", cause: "概念理解", tip: "总长 ÷ 每段长。", guide: ["4/5 ÷ 1/10。", "1/10 的倒数是 10。", "4/5 × 10 = 8。"], drills: ["3/4 米，每段 1/8 米，可剪几段？", "6/7 米，每段 2/7 米，可剪几段？"] }
+      { key: "3/5 ÷ 2/5", tip: "除以一个数等于乘它的倒数。", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分得最简分数。"], drills: ["3/4 ÷ 1/2", "5/6 ÷ 2/3"] },
+      { key: "3/4 ÷ 1/2", tip: "除以一个数等于乘它的倒数。", guide: ["1/2 的倒数是 2。", "3/4 × 2/1。", "约分成 3/2。"], drills: ["2/3 ÷ 1/4", "5/8 ÷ 1/2"] },
+      { key: "1 ÷ 2/5", tip: "1 乘除数的倒数。", guide: ["2/5 的倒数是 5/2。", "1 × 5/2。", "结果是 5/2。"], drills: ["1 ÷ 3/4", "1 ÷ 1/8"] },
+      { key: "2/3 ÷ 4", tip: "除以整数 4，等于乘 1/4。", guide: ["4 的倒数是 1/4。", "2/3 × 1/4。", "约分成 1/6。"], drills: ["3/5 ÷ 3", "5/6 ÷ 5"] },
+      { key: "4/7 ÷ 3", tip: "除以整数 3，等于乘 1/3，不是把 3 乘到分子上。", guide: ["3 的倒数是 1/3。", "4/7 × 1/3。", "得到 4/21。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] },
+      { key: "5/6 ÷ 2/3", tip: "先写倒数再乘，能约分先约。", guide: ["2/3 的倒数是 3/2。", "5/6 × 3/2，6 和 3 先约分。", "得到 5/4。"], drills: ["4/9 ÷ 2/3", "7/8 ÷ 7/12"] },
+      { key: "3 ÷ 3/4", tip: "整数除以分数 = 乘倒数。", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] }
     ];
 
-    const state = { item: null, stuAns: "" };
     const el = {
-      ocrStatus: document.getElementById("ocrStatus"),
-      ocrText: document.getElementById("ocrText"),
-      preview: document.getElementById("preview"),
+      qLine: document.getElementById("qLine"),
+      aLine: document.getElementById("aLine"),
       resultPanel: document.getElementById("resultPanel"),
       verdict: document.getElementById("verdict"),
       report: document.getElementById("report")
     };
-
-    function norm(s) {
-      return String(s || "")
-        .replace(/\s+/g, "")
-        .replace(/[−–—]/g, "-")
-        .replace(/[：]/g, ":")
-        .replace(/[×xX]/g, "*")
-        .replace(/[÷／]/g, "/")
-        .replace(/厘米|米|元|个|本|杯|千米|平方厘米|立方厘米|cm³|cm²|cm|km/gi, "")
-        .replace(/[。．.？?，,！、]/g, "")
-        .toLowerCase();
-    }
-
-    function tokens(s) {
-      return norm(s).replace(/[^\u4e00-\u9fa50-9a-z:/*+-]/g, " ").split(/\s+/).filter((w) => w.length >= 1);
-    }
 
     function gcd(a, b) {
       a = Math.abs(a); b = Math.abs(b);
@@ -162,526 +131,141 @@
     }
 
     function parseFrac(s) {
-      const m = String(s || "").trim().match(/^(-?\d+)(?:\/(-?\d+))?$/);
+      const raw = String(s || "").replace(/\s+/g, "").replace(/又/g, "+");
+      const mixed = raw.match(/^(-?\d+)\+(\d+)\/(\d+)$/);
+      if (mixed) {
+        const whole = +mixed[1], n = +mixed[2], d = +mixed[3];
+        if (!d) return null;
+        return { n: whole * d + (whole < 0 ? -n : n), d };
+      }
+      const m = raw.match(/^(-?\d+)(?:\/(-?\d+))?$/);
       if (!m) return null;
       return { n: +m[1], d: m[2] ? +m[2] : 1 };
     }
 
-    function parseDivEq(text) {
-      const t = String(text || "").replace(/\s+/g, "").replace(/[÷:／]/g, "÷").replace(/＝/g, "=");
-      const m = t.match(/(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)(?:=(-?\d+(?:\/-?\d+)?))?/);
+    function showFrac(f) {
+      if (!f) return "";
+      return simp(f.n, f.d);
+    }
+
+    function sameFrac(a, b) {
+      if (!a || !b || !a.d || !b.d) return false;
+      return a.n * b.d === b.n * a.d;
+    }
+
+    function cleanExpr(s) {
+      return String(s || "")
+        .replace(/\s+/g, "")
+        .replace(/[：]/g, ":")
+        .replace(/[＝]/g, "=")
+        .replace(/[÷:／]/g, "÷");
+    }
+
+    function parseInput(qText, aText) {
+      let q = cleanExpr(qText);
+      let stuRaw = String(aText || "").replace(/\s+/g, "");
+      if (q.includes("=") && !stuRaw) {
+        const parts = q.split("=");
+        q = parts[0];
+        stuRaw = parts.slice(1).join("=");
+      }
+      q = q.replace(/=.*$/, "");
+      const m = q.match(/^(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)$/);
       if (!m) return null;
       const left = parseFrac(m[1]);
       const right = parseFrac(m[2]);
       if (!left || !right || !right.n) return null;
-      const q = `计算：${simp(left.n, left.d)} ÷ ${simp(right.n, right.d)} = ？`;
+      const leftShow = showFrac(left);
+      const rightShow = showFrac(right);
       const answer = simp(left.n * right.d, left.d * right.n);
-      const stu = m[3] || "";
-      const hit = BANK.find((x) => x.q.includes(`${simp(left.n, left.d)} ÷ ${simp(right.n, right.d)}`));
-      const item = hit || {
-        q,
-        answer,
-        aliases: [answer],
-        kp: "分数除法",
-        cause: "方法选择",
+      const rec = simp(right.d, right.n);
+      const stu = parseFrac(stuRaw.replace(/[÷／]/g, "/"));
+      const key = leftShow + " ÷ " + rightShow;
+      const tip = BANK.find((x) => x.key === key) || {
         tip: "除以一个数等于乘它的倒数。分数÷整数，要把整数写成倒数再乘。",
         guide: ["找出除数。", "写成乘除数的倒数。", "约分成最简分数。"],
         drills: ["2/5 ÷ 3", "5/8 ÷ 4"]
       };
-      if (!hit) item.answer = answer;
-      return { item, stu };
+      return {
+        qShow: leftShow + " ÷ " + rightShow,
+        leftShow,
+        rightShow,
+        rec,
+        answer,
+        stuShow: stuRaw ? (stu ? showFrac(stu) : stuRaw) : "",
+        stu,
+        ok: !!(stu && sameFrac(stu, parseFrac(answer))),
+        tip: tip.tip,
+        guide: tip.guide,
+        drills: tip.drills
+      };
     }
 
-    function matchBank(text) {
-      if (!/\d/.test(text || "")) return null;
-      const pool = BANK;
-      const tks = tokens(text);
-      let best = null, bestScore = 0;
-      pool.forEach((item) => {
-        const its = tokens(item.q);
-        let hit = 0;
-        tks.forEach((w) => { if (its.some((k) => k.includes(w) || w.includes(k))) hit += 1; });
-        const score = hit / Math.max(its.length, 3);
-        if (score > bestScore) { bestScore = score; best = item; }
-      });
-      return bestScore >= 0.28 ? best : null;
+    function reportOf(p) {
+      const judge = !p.stuShow ? "还没有填写学生答案" : (p.ok ? "正确" : "错误");
+      const lines = [
+        "【题目】" + p.qShow,
+        "【学生答案】" + (p.stuShow || "未填写"),
+        "【正确答案】" + p.answer,
+        "【判断】学生答案" + judge,
+        "",
+        "【计算过程】",
+        p.qShow + " = " + p.leftShow + " × " + p.rec + " = " + p.answer,
+        "",
+        "【分析】" + p.tip,
+        "",
+        "【订正引导】",
+        "1. " + p.guide[0],
+        "2. " + p.guide[1],
+        "3. " + p.guide[2],
+        "",
+        "【巩固一下】",
+        "1. " + p.drills[0],
+        "2. " + p.drills[1]
+      ];
+      return lines.join("\n");
     }
 
-    function extractAns(text, item) {
-      const raw = String(text || "");
-      const labeled = raw.match(/(?:答|解|作答|答案)\s*[:：=]?\s*([^\n。]{1,20})/);
-      if (labeled) return labeled[1].trim();
-      const cands = [item.answer].concat(item.aliases || []);
-      const ntext = norm(raw);
-      for (const c of cands) {
-        if (c && ntext.includes(norm(c))) return c;
-      }
-      const nums = raw.match(/-?\d+\s*[:：/／.]\s*\d+%?|-?\d+(?:\.\d+)?%?|负\d+/g);
-      return nums && nums.length ? nums[nums.length - 1] : "";
-    }
-
-    function sameAns(user, item) {
-      const u = norm(user);
-      if (!u) return false;
-      return [item.answer].concat(item.aliases || []).map(norm).some((c) => c && (u === c || u.includes(c) || c.includes(u)));
-    }
-
-    function reportOf(item, userAns, ok) {
-      if (ok) {
-        return (
-          `【匹配题目】${item.q}\n` +
-          `【识别作答】${userAns || "已从照片中识别到正确答案"}\n` +
-          `【知识点】${item.kp}\n` +
-          `【掌握程度】掌握较好。这道题做对了，说明「${item.kp}」基本过关。\n` +
-          `【提醒】${item.tip}\n\n` +
-          `【巩固一下】\n1. ${item.drills[0]}\n2. ${item.drills[1]}\n\n` +
-          `【3天小计划】\n- Day1：把本题步骤再写一遍，确认公式或方法。\n- Day2：做上面 2 道同类题。\n- Day3：限时口述思路，自我检测。`
-        );
-      }
-      return (
-        `【匹配题目】${item.q}\n` +
-        `【识别作答】${userAns || "照片里没有稳定识别到作答"}\n` +
-        `【知识点】${item.kp}\n` +
-        `【掌握程度】该知识点还需巩固（可能原因：${item.cause}）。\n` +
-        `【分析】${item.tip}\n\n` +
-        `【订正引导】\n1. ${item.guide[0]}\n2. ${item.guide[1]}\n3. ${item.guide[2]}\n` +
-        `先按步骤自己再算，标准得数先不写在这里。\n\n` +
-        `【巩固一下】\n1. ${item.drills[0]}\n2. ${item.drills[1]}\n\n` +
-        `【3天小计划】\n- Day1：订正本题，写清步骤。\n- Day2：完成 2 道巩固题。\n- Day3：合上材料口述思路后再做 2 道同类题。`
-      );
-    }
-
-    function showResult(item, userAns, ok, note) {
-      state.item = item;
-      state.stuAns = userAns;
-      el.resultPanel.classList.remove("hidden");
-      el.verdict.className = "verdict " + (ok ? "ok" : (userAns ? "bad" : "mid"));
-      if (!item) {
-        el.verdict.textContent = "还没有匹配到分数除法习题，请把识别文字改清楚，或换一张更清晰的照片。";
-        el.report.textContent = note || "";
+    function grade() {
+      const parsed = parseInput(el.qLine.value, el.aLine.value);
+      if (!parsed) {
+        el.resultPanel.classList.remove("hidden");
+        el.verdict.className = "verdict mid";
+        el.verdict.textContent = "请先写成分数除法算式，例如题目填 4/7 ÷ 3，学生答案填 12/7。";
+        el.report.textContent = "";
         return;
       }
-      el.verdict.textContent = ok
-        ? "批改：正确。这道作业做对了，下面看知识点掌握情况。"
-        : (userAns
-          ? "批改：与标准答案不一致。下面分析相关知识点掌握程度。"
-          : "已匹配到题目，但作答识别不稳定。请把解答拍清楚后再传一次。");
-      el.report.textContent = item ? reportOf(item, userAns, ok) : "";
+      if (!el.aLine.value.trim() && parsed.stuShow) el.aLine.value = parsed.stuShow;
+      if (el.qLine.value.includes("=")) el.qLine.value = parsed.qShow;
+      el.resultPanel.classList.remove("hidden");
+      if (!parsed.stuShow) {
+        el.verdict.className = "verdict mid";
+        el.verdict.textContent = "题目已读出。请补上学生答案后再判断对错。正确答案是 " + parsed.answer + "。";
+      } else if (parsed.ok) {
+        el.verdict.className = "verdict ok";
+        el.verdict.textContent = "判断：学生答案正确。正确答案是 " + parsed.answer + "。";
+      } else {
+        el.verdict.className = "verdict bad";
+        el.verdict.textContent = "判断：学生答案错误。正确答案是 " + parsed.answer + "，学生写的是 " + parsed.stuShow + "。";
+      }
+      el.report.textContent = reportOf(parsed);
       el.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    let ocrWorker = null;
-    let ocrReady = false;
-
-    function loadFileImage(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("img"));
-        img.src = URL.createObjectURL(file);
-      });
-    }
-
-    function drawScaled(img, minSide) {
-      let w = img.width;
-      let h = img.height;
-      const scale = Math.max(minSide / Math.min(w, h), 1);
-      w = Math.round(w * scale);
-      h = Math.round(h * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
-      return { canvas, ctx, w, h };
-    }
-
-    function otsu(gray) {
-      const hist = new Array(256).fill(0);
-      for (let i = 0; i < gray.length; i++) hist[gray[i]]++;
-      const total = gray.length;
-      let sum = 0;
-      for (let i = 0; i < 256; i++) sum += i * hist[i];
-      let sumB = 0, wB = 0, best = 0, thresh = 130;
-      for (let t = 0; t < 256; t++) {
-        wB += hist[t];
-        if (!wB) continue;
-        const wF = total - wB;
-        if (!wF) break;
-        sumB += t * hist[t];
-        const diff = sumB / wB - (sum - sumB) / wF;
-        const between = wB * wF * diff * diff;
-        if (between > best) { best = between; thresh = t; }
-      }
-      return thresh;
-    }
-
-    function imageToBinary(ctx, w, h) {
-      const data = ctx.getImageData(0, 0, w, h);
-      const p = data.data;
-      const gray = new Uint8Array(w * h);
-      for (let i = 0, j = 0; i < p.length; i += 4, j++) {
-        gray[j] = (0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2]) | 0;
-      }
-      const thresh = Math.min(otsu(gray), 125);
-      const bin = new Uint8Array(w * h);
-      for (let i = 0; i < gray.length; i++) bin[i] = gray[i] < thresh ? 0 : 255;
-      const spanNeed = Math.round(w * 0.55);
-      for (let y = 0; y < h; y++) {
-        let ink = 0, first = -1, last = -1;
-        for (let x = 0; x < w; x++) {
-          if (bin[y * w + x] === 0) {
-            ink++;
-            if (first < 0) first = x;
-            last = x;
-          }
-        }
-        if (ink > spanNeed && last - first > spanNeed) {
-          for (let x = 0; x < w; x++) bin[y * w + x] = 255;
-        }
-      }
-      const fat = new Uint8Array(bin.length);
-      fat.fill(255);
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          let ink = false;
-          for (let dy = -1; dy <= 1 && !ink; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              if (bin[(y + dy) * w + x + dx] === 0) { ink = true; break; }
-            }
-          }
-          if (ink) fat[y * w + x] = 0;
-        }
-      }
-      return fat;
-    }
-
-    function binaryCanvas(bin, w, h) {
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext("2d");
-      const img = ctx.createImageData(w, h);
-      for (let i = 0; i < bin.length; i++) {
-        const v = bin[i];
-        img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
-        img.data[i * 4 + 3] = 255;
-      }
-      ctx.putImageData(img, 0, 0);
-      return c;
-    }
-
-    function findBlobs(bin, w, h) {
-      const seen = new Uint8Array(w * h);
-      const blobs = [];
-      const stack = [];
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const start = y * w + x;
-          if (bin[start] || seen[start]) continue;
-          let minx = x, maxx = x, miny = y, maxy = y, area = 0;
-          stack.push(start);
-          seen[start] = 1;
-          while (stack.length) {
-            const p = stack.pop();
-            const px = p % w;
-            const py = (p - px) / w;
-            area++;
-            if (px < minx) minx = px;
-            if (px > maxx) maxx = px;
-            if (py < miny) miny = py;
-            if (py > maxy) maxy = py;
-            for (let dy = -1; dy <= 1; dy++) {
-              for (let dx = -1; dx <= 1; dx++) {
-                if (!dx && !dy) continue;
-                const nx = px + dx, ny = py + dy;
-                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-                const np = ny * w + nx;
-                if (bin[np] || seen[np]) continue;
-                seen[np] = 1;
-                stack.push(np);
-              }
-            }
-          }
-          const bw = maxx - minx + 1;
-          const bh = maxy - miny + 1;
-          if (area < 28 || bh < 10 || bw > w * 0.38 || bh > h * 0.42 || bw / bh > 5.2) continue;
-          blobs.push({
-            minx, maxx, miny, maxy, area,
-            cx: (minx + maxx) / 2,
-            cy: (miny + maxy) / 2
-          });
-        }
-      }
-      return blobs;
-    }
-
-    function mergeSideDigits(blobs) {
-      const sorted = blobs.slice().sort((a, b) => a.cx - b.cx);
-      const out = [];
-      sorted.forEach((c) => {
-        const last = out[out.length - 1];
-        if (last) {
-          const yHit = Math.min(last.maxy, c.maxy) - Math.max(last.miny, c.miny);
-          const minH = Math.min(last.maxy - last.miny, c.maxy - c.miny) || 1;
-          const gap = c.minx - last.maxx;
-          const avgW = ((last.maxx - last.minx) + (c.maxx - c.minx)) / 2;
-          if (yHit > minH * 0.4 && gap < avgW * 0.9 && gap > -avgW * 0.35) {
-            last.minx = Math.min(last.minx, c.minx);
-            last.maxx = Math.max(last.maxx, c.maxx);
-            last.miny = Math.min(last.miny, c.miny);
-            last.maxy = Math.max(last.maxy, c.maxy);
-            last.area += c.area;
-            last.cx = (last.minx + last.maxx) / 2;
-            last.cy = (last.miny + last.maxy) / 2;
-            return;
-          }
-        }
-        out.push({
-          minx: c.minx, maxx: c.maxx, miny: c.miny, maxy: c.maxy,
-          area: c.area, cx: c.cx, cy: c.cy
-        });
-      });
-      return out;
-    }
-
-    function pairFractions(blobs) {
-      const used = new Set();
-      const fracs = [];
-      for (let i = 0; i < blobs.length; i++) {
-        if (used.has(i)) continue;
-        let best = -1, bestScore = 0;
-        for (let j = 0; j < blobs.length; j++) {
-          if (i === j || used.has(j)) continue;
-          const a = blobs[i], b = blobs[j];
-          const overlap = Math.min(a.maxx, b.maxx) - Math.max(a.minx, b.minx);
-          const minW = Math.min(a.maxx - a.minx, b.maxx - b.minx) || 1;
-          if (overlap < minW * 0.3) continue;
-          const above = a.cy < b.cy ? a : b;
-          const below = a.cy < b.cy ? b : a;
-          const gap = below.miny - above.maxy;
-          const avgH = ((a.maxy - a.miny) + (b.maxy - b.miny)) / 2;
-          if (gap < -avgH * 0.25 || gap > avgH * 2.4) continue;
-          const score = overlap / minW - Math.abs(gap - avgH * 0.35) / (avgH + 1);
-          if (score > bestScore) { bestScore = score; best = j; }
-        }
-        if (best >= 0 && bestScore > 0.12) {
-          const a = blobs[i], b = blobs[best];
-          const num = a.cy < b.cy ? a : b;
-          const den = a.cy < b.cy ? b : a;
-          fracs.push({ num, den, cx: (num.cx + den.cx) / 2 });
-          used.add(i);
-          used.add(best);
-        }
-      }
-      const ints = blobs.filter((_, i) => !used.has(i));
-      return { fracs, ints };
-    }
-
-    async function readDigits(worker, src, box) {
-      const pad = 10;
-      const sx = Math.max(0, box.minx - pad);
-      const sy = Math.max(0, box.miny - pad);
-      const sw = Math.min(src.width, box.maxx + pad) - sx;
-      const sh = Math.min(src.height, box.maxy + pad) - sy;
-      if (sw < 4 || sh < 4) return "";
-      const scale = Math.max(4, 90 / Math.min(sw, sh));
-      const out = document.createElement("canvas");
-      out.width = Math.max(40, Math.round(sw * scale));
-      out.height = Math.max(40, Math.round(sh * scale));
-      const ctx = out.getContext("2d");
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, out.width, out.height);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(src, sx, sy, sw, sh, 0, 0, out.width, out.height);
-      const modes = ["7", "8", "10"];
-      for (let i = 0; i < modes.length; i++) {
-        await worker.setParameters({
-          tessedit_char_whitelist: "0123456789",
-          tessedit_pageseg_mode: modes[i]
-        });
-        const { data } = await worker.recognize(out);
-        const d = (data && data.text ? data.text : "").replace(/\D/g, "");
-        if (d) return d;
-      }
-      return "";
-    }
-
-    function joinExpr(terms) {
-      const clean = terms.filter((t) => t && t.n && (t.kind !== "frac" || t.d));
-      if (clean.length < 2) return "";
-      const bit = (t) => (t.kind === "frac" ? t.n + "/" + t.d : t.n);
-      if (clean.length === 2) return bit(clean[0]) + " ÷ " + bit(clean[1]);
-      return bit(clean[0]) + " ÷ " + bit(clean[1]) + " = " + bit(clean[2]);
-    }
-
-    function assembleExpr(fracs, ints) {
-      const fTerms = fracs
-        .filter((f) => f.n && f.d)
-        .map((f) => ({ kind: "frac", n: f.n, d: f.d, cx: f.cx }));
-      const iTerms = ints
-        .filter((x) => x.n)
-        .map((x) => ({ kind: "int", n: x.n, cx: x.cx }));
-      if (fTerms.length >= 2 && iTerms.length) {
-        fTerms.sort((a, b) => a.cx - b.cx);
-        const left = fTerms[0].cx;
-        const right = fTerms[fTerms.length - 1].cx;
-        const mid = iTerms.filter((x) => x.cx > left && x.cx < right);
-        const pick = mid[0] || iTerms.slice().sort((a, b) => a.cx - b.cx)[0];
-        return joinExpr(fTerms.concat([pick]).sort((a, b) => a.cx - b.cx).slice(0, 3));
-      }
-      return joinExpr(fTerms.concat(iTerms).sort((a, b) => a.cx - b.cx).slice(0, 3));
-    }
-
-    async function readStackedDivision(file, worker) {
-      const img = await loadFileImage(file);
-      const { canvas, ctx, w, h } = drawScaled(img, 1200);
-      const bin = imageToBinary(ctx, w, h);
-      const src = binaryCanvas(bin, w, h);
-      let blobs = mergeSideDigits(findBlobs(bin, w, h));
-      if (blobs.length > 10) {
-        const areas = blobs.map((b) => b.area).sort((a, b) => a - b);
-        const med = areas[Math.floor(areas.length / 2)] || 1;
-        blobs = blobs.filter((b) => b.area > med * 0.12 && b.area < med * 14);
-      }
-      const paired = pairFractions(blobs);
-      if (!paired.fracs.length) return "";
-      for (let i = 0; i < paired.fracs.length; i++) {
-        const f = paired.fracs[i];
-        f.n = await readDigits(worker, src, f.num);
-        f.d = await readDigits(worker, src, f.den);
-      }
-      for (let i = 0; i < paired.ints.length; i++) {
-        paired.ints[i].n = await readDigits(worker, src, paired.ints[i]);
-      }
-      return assembleExpr(paired.fracs, paired.ints);
-    }
-
-    function preprocessImage(file) {
-      return loadFileImage(file).then((img) => {
-        const { canvas, ctx, w, h } = drawScaled(img, 1400);
-        const bin = imageToBinary(ctx, w, h);
-        const src = binaryCanvas(bin, w, h);
-        return new Promise((resolve, reject) => {
-          src.toBlob((blob) => blob ? resolve(blob) : reject(new Error("prep")), "image/png");
-        });
-      });
-    }
-
-    async function ensureOcr() {
-      if (ocrWorker && ocrReady) return ocrWorker;
-      if (!window.Tesseract) throw new Error("ocr");
-      if (!ocrWorker) {
-        el.ocrStatus.textContent = "正在启动识别…";
-        ocrWorker = await window.Tesseract.createWorker("eng");
-        await ocrWorker.setParameters({
-          tessedit_char_whitelist: "0123456789/=-+. ",
-          tessedit_pageseg_mode: "6"
-        });
-        ocrReady = true;
-      }
-      return ocrWorker;
-    }
-
-    async function warmupOcr() {
-      try {
-        if (!window.Tesseract) return;
-        el.ocrStatus.textContent = "识别已就绪，可以直接拍照。";
-        await ensureOcr();
-        el.ocrStatus.textContent = "识别已就绪，上传后约 2～4 秒出结果。";
-      } catch (_) {
-        el.ocrStatus.textContent = "上传后将自动批改分数除法习题。";
-      }
-    }
-
-    async function gradePhoto(file) {
-      el.preview.src = URL.createObjectURL(file);
-      el.preview.classList.remove("hidden");
+    function clearAll() {
+      el.qLine.value = "";
+      el.aLine.value = "";
       el.resultPanel.classList.add("hidden");
-      el.ocrStatus.textContent = "正在按分数线拆开识别…";
-      try {
-        const worker = await ensureOcr();
-        const stacked = await readStackedDivision(file, worker);
-        if (stacked && parseDivEq(stacked)) {
-          el.ocrText.value = stacked;
-          document.getElementById("exprLine").value = stacked;
-          el.ocrStatus.textContent = "已读成：" + stacked;
-          autoGrade(stacked);
-          return;
-        }
-        el.ocrStatus.textContent = "正在整图再认一次…";
-        await worker.setParameters({
-          tessedit_char_whitelist: "0123456789/=-+. ",
-          tessedit_pageseg_mode: "6"
-        });
-        const prepared = await preprocessImage(file);
-        const { data } = await worker.recognize(prepared);
-        const text = (data && data.text ? data.text : "").replace(/\n{2,}/g, "\n").trim();
-        el.ocrText.value = text;
-        if (parseDivEq(text) || matchBank(text)) {
-          autoGrade(text);
-          return;
-        }
-        el.ocrStatus.textContent = "手写竖式分数还是不太好认。请在上面一行写出算式，例如 4/7 ÷ 3 = 12/7，再点「批改」。";
-        document.getElementById("exprLine").focus();
-      } catch (_) {
-        el.ocrStatus.textContent = "识别没有成功。请在上面一行写出算式后点「批改」。";
-        document.getElementById("exprLine").focus();
-      }
+      el.qLine.focus();
     }
 
-    function autoGrade(text) {
-      const parsed = parseDivEq(text);
-      const item = parsed ? parsed.item : matchBank(text);
-      const stu = parsed ? parsed.stu : (item ? extractAns(text, item) : "");
-      if (!item) {
-        el.ocrStatus.textContent = "还没读成分数除法算式。请写成 4/7 ÷ 3 = 12/7 这样，再点「批改」。";
-        el.resultPanel.classList.add("hidden");
-        return;
-      }
-      const ans = stu || extractAns(text, item);
-      const ok = sameAns(ans, item);
-      el.ocrStatus.textContent = "已批改。";
-      showResult(item, ans, ok);
-    }
-
-    document.getElementById("file").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (file) gradePhoto(file);
+    document.getElementById("gradeBtn").addEventListener("click", grade);
+    document.getElementById("clearBtn").addEventListener("click", clearAll);
+    [el.qLine, el.aLine].forEach((box) => {
+      box.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") grade();
+      });
     });
-
-    function gradeFromLine() {
-      const line = document.getElementById("exprLine").value.trim();
-      const text = line || el.ocrText.value.trim();
-      if (!text) {
-        alert("请先拍照，或写出算式，例如 4/7 ÷ 3 = 12/7");
-        return;
-      }
-      autoGrade(text);
-    }
-
-    document.getElementById("exprBtn").addEventListener("click", gradeFromLine);
-    document.getElementById("exprLine").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") gradeFromLine();
-    });
-
-    el.ocrText.addEventListener("change", () => {
-      const text = el.ocrText.value.trim();
-      if (/\d/.test(text) && text.length > 3) autoGrade(text);
-    });
-
-    document.getElementById("againBtn").addEventListener("click", () => {
-      el.resultPanel.classList.add("hidden");
-      el.ocrText.value = "";
-      document.getElementById("exprLine").value = "";
-      el.ocrStatus.textContent = "识别已就绪，可以直接再拍一张。手写不清时写出算式即可。";
-      el.preview.classList.add("hidden");
-      document.getElementById("file").value = "";
-    });
-
-    warmupOcr();
   </script>
 </body>
 </html>
