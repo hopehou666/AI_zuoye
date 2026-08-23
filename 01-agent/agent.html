@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
@@ -104,6 +105,7 @@
       { q: "计算：3/4 ÷ 1/2 = ？", answer: "3/2", aliases: ["1.5"], kp: "分数除法", cause: "方法选择", tip: "除以一个数等于乘它的倒数。", guide: ["1/2 的倒数是 2。", "3/4 × 2/1。", "约分成 3/2。"], drills: ["2/3 ÷ 1/4", "5/8 ÷ 1/2"] },
       { q: "计算：1 ÷ 2/5 = ？", answer: "5/2", aliases: ["2.5", "2又1/2"], kp: "分数除法", cause: "方法选择", tip: "1 乘除数的倒数。", guide: ["2/5 的倒数是 5/2。", "1 × 5/2。", "结果是 5/2。"], drills: ["1 ÷ 3/4", "1 ÷ 1/8"] },
       { q: "计算：2/3 ÷ 4 = ？", answer: "1/6", aliases: ["2/12"], kp: "分数除法", cause: "方法选择", tip: "除以整数 4，等于乘 1/4。", guide: ["4 的倒数是 1/4。", "2/3 × 1/4。", "约分成 1/6。"], drills: ["3/5 ÷ 3", "5/6 ÷ 5"] },
+      { q: "计算：4/7 ÷ 3 = ？", answer: "4/21", aliases: ["4/21"], kp: "分数除法", cause: "方法选择", tip: "除以整数 3，等于乘 1/3，不是把 3 乘到分子上。", guide: ["3 的倒数是 1/3。", "4/7 × 1/3。", "得到 4/21。"], drills: ["2/5 ÷ 3", "5/8 ÷ 4"] },
       { q: "计算：5/6 ÷ 2/3 = ？", answer: "5/4", aliases: ["1.25", "1又1/4"], kp: "分数除法", cause: "计算失误", tip: "先写倒数再乘，能约分先约。", guide: ["2/3 的倒数是 3/2。", "5/6 × 3/2，6 和 3 先约分。", "得到 5/4。"], drills: ["4/9 ÷ 2/3", "7/8 ÷ 7/12"] },
       { q: "计算：3 ÷ 3/4 = ？", answer: "4", aliases: ["4/1"], kp: "分数除法", cause: "方法选择", tip: "整数除以分数 = 乘倒数。", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] },
       { q: "一个数的倒数是 4/7，这个数是？", answer: "7/4", aliases: ["1.75"], kp: "分数除法", cause: "概念理解", tip: "互为倒数的两数乘积是 1。", guide: ["倒数是 4/7。", "把分数倒过来。", "这个数是 7/4。"], drills: ["倒数是 5/8 的数是？", "倒数是 3 的数是？"] },
@@ -214,45 +216,86 @@
       el.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    async function ensureOcr() {
-      if (window.Tesseract) return;
-      el.ocrStatus.textContent = "正在准备识别（首次大约十几秒）…";
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-        s.onload = resolve;
-        s.onerror = () => reject(new Error("load"));
-        document.head.appendChild(s);
+    let ocrWorker = null;
+    let ocrReady = false;
+
+    function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const max = 900;
+          let w = img.width;
+          let h = img.height;
+          if (w > max) {
+            h = Math.round(h * max / w);
+            w = max;
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("compress")), "image/jpeg", 0.7);
+        };
+        img.onerror = () => reject(new Error("img"));
+        img.src = URL.createObjectURL(file);
       });
+    }
+
+    async function ensureOcr() {
+      if (ocrWorker && ocrReady) return ocrWorker;
+      if (!window.Tesseract) throw new Error("ocr");
+      if (!ocrWorker) {
+        el.ocrStatus.textContent = "正在启动识别…";
+        ocrWorker = await window.Tesseract.createWorker("eng");
+        ocrReady = true;
+      }
+      return ocrWorker;
+    }
+
+    async function warmupOcr() {
+      try {
+        if (!window.Tesseract) return;
+        el.ocrStatus.textContent = "识别已就绪，可以直接拍照。";
+        await ensureOcr();
+        el.ocrStatus.textContent = "识别已就绪，上传后约 2～4 秒出结果。";
+      } catch (_) {
+        el.ocrStatus.textContent = "上传后将自动批改分数除法习题。";
+      }
     }
 
     async function gradePhoto(file) {
       el.preview.src = URL.createObjectURL(file);
       el.preview.classList.remove("hidden");
-      el.ocrStatus.textContent = "正在识别作业照片…";
+      el.ocrStatus.textContent = "正在压缩并识别…";
       try {
-        await ensureOcr();
-        const { data } = await window.Tesseract.recognize(file, "chi_sim+eng", {
-          logger: (m) => {
-            if (m.status === "recognizing text" && m.progress) {
-              el.ocrStatus.textContent = `识别中 ${Math.round(m.progress * 100)}%`;
-            }
-          }
-        });
+        const small = await compressImage(file);
+        const worker = await ensureOcr();
+        const { data } = await worker.recognize(small);
         const text = (data && data.text ? data.text : "").replace(/\n{2,}/g, "\n").trim();
         el.ocrText.value = text;
         if (!text) {
-          el.ocrStatus.textContent = "没有识别到文字，请再拍一张清楚一些的。";
+          el.ocrStatus.textContent = "没有识别到算式，请再拍清楚一些，或把算式打进识别框。";
           return;
         }
         autoGrade(text);
       } catch (_) {
-        el.ocrStatus.textContent = "识别没有成功。请换个角度再拍，或把题目和答案写进识别框后点文字区域下方会自动再批改。";
+        el.ocrStatus.textContent = "识别没有成功。可把算式打进识别框后点框外，会自动再批改。";
       }
     }
 
+    function matchByExpr(text) {
+      const t = String(text || "").replace(/\s+/g, "").replace(/[÷:]/g, "÷");
+      const m = t.match(/(\d+)\/(\d+)÷(\d+)/) || t.match(/(\d+)\/(\d+)\/(\d+)/);
+      if (!m) return null;
+      const key = `${m[1]}/${m[2]} ÷ ${m[3]}`;
+      return BANK.find((x) => x.q.includes(key)) || null;
+    }
+
     function autoGrade(text) {
-      const item = matchBank(text);
+      const item = matchBank(text) || matchByExpr(text);
       if (!item) {
         el.ocrStatus.textContent = "文字已识别，但还没对上分数除法习题。可改几个字后再点识别框外面。";
         showResult(null, "", false);
@@ -277,10 +320,12 @@
     document.getElementById("againBtn").addEventListener("click", () => {
       el.resultPanel.classList.add("hidden");
       el.ocrText.value = "";
-      el.ocrStatus.textContent = "上传后将自动批改分数除法习题。";
+      el.ocrStatus.textContent = "识别已就绪，可以直接再拍一张。";
       el.preview.classList.add("hidden");
       document.getElementById("file").value = "";
     });
+
+    warmupOcr();
   </script>
 </body>
 </html>
