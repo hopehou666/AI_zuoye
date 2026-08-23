@@ -8,7 +8,7 @@
 
 | 路径 | 目录 | 交付物 | 使用者 |
 |------|------|--------|--------|
-| 路径1 智能体 | [01-agent](./01-agent/) | Agent 链接 + 提示词 | 学生自助诊断 |
+| 路径1 作业帮 | [01-agent](./01-agent/) | 作业批改链接 + 提示词 | 学生拍照批改、掌握分析 |
 | 路径2 多维表 | [02-table](./02-table/) | 多维表（AI 字段）链接 | 教师班级学情管理 |
 | 路径3 交互网页 | [03_web](./03_web/) | `index.html` | 课堂/课后即时练习 |
 | 最大公因数 | [04_gcf](./04_gcf/) | `index.html` | 列举法 / 更相减损法演示 |
@@ -26,7 +26,7 @@
 | 入口 | 链接 |
 |------|------|
 | 总导航 | https://hopehou666.github.io/AI_zuoye/ |
-| 路径1 智能体 | https://hopehou666.github.io/AI_zuoye/01-agent/agent.html |
+| 路径1 作业帮 | https://hopehou666.github.io/AI_zuoye/01-agent/agent.html |
 | 路径2 多维表 | https://hopehou666.github.io/AI_zuoye/02-table/table.html |
 | 路径3 交互网页 | https://hopehou666.github.io/AI_zuoye/03_web/index.html |
 | 最大公因数计算器 | https://hopehou666.github.io/AI_zuoye/04_gcf/index.html |
@@ -36,5 +36,5 @@
 ## 建议演示顺序
 
 1. 打开交互网页做 5 题小测。
-2. 用同一道错题在智能体中诊断。
+2. 用同一道题在作业帮中拍照批改。
 3. 打开多维表查看 AI 字段自动生成结果。

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>错题诊断与个性化复习助手 · AI智能体</title>
+  <title>作业帮 · 作业批改</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
@@ -11,7 +11,7 @@
     :root {
       --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
       --line: #d8cfc0; --accent: #0d7a6f; --accent-deep: #065a52;
-      --bot: #eef8f6; --user: #fff4e8; --shadow: 0 12px 40px rgba(26,43,60,.08);
+      --ok: #1f7a4c; --bad: #b33a3a; --shadow: 0 12px 40px rgba(26,43,60,.08);
     }
     * { box-sizing: border-box; }
     body {
@@ -20,256 +20,296 @@
         radial-gradient(900px 480px at 0% 0%, #dceeea, transparent 60%),
         radial-gradient(700px 400px at 100% 0%, #f3e2d4, transparent 55%),
         var(--bg);
-      display: flex; flex-direction: column;
     }
-    header {
-      padding: 18px 20px 10px; width: min(860px, 100%); margin: 0 auto;
-    }
+    .wrap { width: min(720px, calc(100% - 24px)); margin: 0 auto; padding: 20px 0 48px; }
+    .home-link { color: var(--accent-deep); font-weight: 700; text-decoration: none; font-size: .9rem; }
     .brand {
-      font-family: "ZCOOL XiaoWei", serif; font-size: 1.55rem; color: var(--accent-deep);
-      display: flex; align-items: center; gap: 10px;
+      font-family: "ZCOOL XiaoWei", serif; font-size: 1.7rem; color: var(--accent-deep);
+      display: flex; align-items: center; gap: 10px; margin: 10px 0 4px;
     }
     .brand i {
       width: 12px; height: 12px; border-radius: 3px; background: var(--accent);
       box-shadow: 0 0 0 5px rgba(13,122,111,.15);
     }
-    header p { margin: 8px 0 0; color: var(--muted); font-size: .92rem; line-height: 1.6; }
-    .shell {
-      flex: 1; width: min(860px, calc(100% - 24px)); margin: 0 auto 20px;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
-      box-shadow: var(--shadow); display: flex; flex-direction: column; min-height: 70vh;
+    .tag { display: inline-block; font-size: .82rem; font-weight: 700; color: var(--accent-deep); background: #eef8f6; border: 1px solid #b7ddd6; border-radius: 999px; padding: 3px 10px; }
+    .desc { margin: 10px 0 16px; color: var(--muted); line-height: 1.65; font-size: .93rem; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px;
     }
-    #chat {
-      flex: 1; overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 12px;
+    .step { font-size: .75rem; letter-spacing: .12em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+    h2 { margin: 0 0 12px; font-size: 1.12rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+    .chip, .btn { appearance: none; font: inherit; cursor: pointer; border-radius: 12px; }
+    .chip { border: 1.5px solid var(--line); background: #fff; padding: 8px 14px; }
+    .chip.on { border-color: var(--accent); background: #eef8f6; color: var(--accent-deep); font-weight: 700; }
+    .lock { opacity: .7; cursor: default; }
+    .btn { border: none; padding: 10px 18px; background: var(--accent); color: #fff; font-weight: 700; }
+    .btn:hover { background: var(--accent-deep); }
+    .btn.ghost { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+    .drop {
+      display: block; border: 1.5px dashed #b7ddd6; border-radius: 14px; background: #f7fbfa;
+      padding: 22px 16px; text-align: center; color: var(--muted); line-height: 1.65; cursor: pointer;
     }
-    .msg {
-      max-width: 88%; padding: 12px 14px; border-radius: 14px; line-height: 1.7;
-      white-space: pre-wrap; word-break: break-word; font-size: .95rem;
-      animation: rise .25s ease;
+    .drop input { display: none; }
+    .preview { max-width: 100%; max-height: 260px; margin-top: 12px; border-radius: 10px; }
+    .status { font-size: .88rem; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+    .verdict { padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; line-height: 1.65; font-weight: 700; }
+    .verdict.ok { background: #e8f6ee; color: var(--ok); border: 1px solid #b7e0c7; }
+    .verdict.mid { background: #fff7e8; color: #9a6400; border: 1px solid #efd8a6; }
+    .verdict.bad { background: #fceeee; color: var(--bad); border: 1px solid #efc2c2; }
+    .report { white-space: pre-wrap; line-height: 1.75; }
+    .hidden { display: none !important; }
+    label.field { display: block; color: var(--muted); font-size: .82rem; margin: 10px 0 6px; }
+    textarea {
+      width: 100%; min-height: 64px; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 10px; font: inherit; resize: vertical; background: #fff;
     }
-    .msg.bot { align-self: flex-start; background: var(--bot); border: 1px solid #c6e4de; }
-    .msg.user { align-self: flex-end; background: var(--user); border: 1px solid #edd7b8; }
-    .msg .who { display: block; font-size: .75rem; font-weight: 700; margin-bottom: 4px; opacity: .7; }
-    .quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 10px; }
-    .quick button {
-      border: 1px solid var(--line); background: #fff; border-radius: 999px;
-      padding: 8px 12px; font: inherit; font-size: .82rem; cursor: pointer; color: var(--ink);
-    }
-    .quick button:hover { border-color: var(--accent); color: var(--accent-deep); }
-    .composer {
-      display: flex; gap: 10px; padding: 14px 16px 16px; border-top: 1px solid var(--line);
-    }
-    .composer textarea {
-      flex: 1; resize: none; min-height: 52px; max-height: 120px; border-radius: 12px;
-      border: 1.5px solid var(--line); padding: 12px; font: inherit; background: #fff;
-    }
-    .composer textarea:focus { outline: none; border-color: var(--accent); }
-    .composer button {
-      border: none; border-radius: 12px; padding: 0 18px; background: var(--accent);
-      color: #fff; font: inherit; font-weight: 700; cursor: pointer;
-    }
-    .composer button:hover { background: var(--accent-deep); }
-    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand"><i></i>错题诊断与个性化复习助手</div>
-    <p>路径1 · AI 智能体（可直接对话）。把错题发给我（最好带年级、学科和你的答案）。</p>
-  </header>
+  <div class="wrap">
+    <a class="home-link" href="../index.html">← 返回导航</a>
+    <div class="brand"><i></i>作业帮</div>
+    <span class="tag">作业批改</span>
+    <p class="desc">拍一张作业（题目 + 你的解答）。系统自动识别、批改，并分析这道题相关知识点的掌握程度。全对也可以拍，用来确认掌握情况。</p>
 
-  <div class="shell">
-    <div id="chat" aria-live="polite"></div>
-    <div class="quick" id="quick">
-      <button type="button" data-q="六年级数学。小明有3/4米彩带，用去2/5，还剩多少米？我算成1/20米。">示例：分数减法错题</button>
-      <button type="button" data-q="六年级数学。圆半径3cm，求周长（π=3.14）。我用了πr²。">示例：圆周长错题</button>
-      <button type="button" data-q="六年级数学。一件上衣200元打八折，多少钱？我答240元。">示例：百分数错题</button>
-    </div>
-    <form class="composer" id="form">
-      <textarea id="input" placeholder="输入错题：年级 + 学科 + 题目 + 你的答案…" rows="2"></textarea>
-      <button type="submit">发送</button>
-    </form>
+    <section class="panel">
+      <div class="step">01 选择范围</div>
+      <h2>六年级 · 数学</h2>
+      <div class="row">
+        <button type="button" class="chip on lock">六年级</button>
+        <button type="button" class="chip on lock">数学</button>
+      </div>
+      <div class="row" id="termRow" style="margin-top:10px;">
+        <button type="button" class="chip on" data-term="up">上册</button>
+        <button type="button" class="chip" data-term="down">下册</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="step">02 拍照上传作业</div>
+      <h2>把题目和解答拍在同一张图里</h2>
+      <label class="drop">
+        点击拍照或从相册选择<br />印刷体更清楚；字迹模糊时可在下方改几个字。
+        <input id="file" type="file" accept="image/*" capture="environment" />
+        <img id="preview" class="preview hidden" alt="作业照片" />
+      </label>
+      <p class="status" id="ocrStatus">选好范围后上传照片，将自动批改。</p>
+      <label class="field" for="ocrText">识别文字（一般不用改）</label>
+      <textarea id="ocrText" placeholder="识别结果"></textarea>
+    </section>
+
+    <section class="panel hidden" id="resultPanel">
+      <div class="step">03 批改结果</div>
+      <h2>作业批改与掌握分析</h2>
+      <div id="verdict" class="verdict"></div>
+      <div id="report" class="report"></div>
+      <div class="row" style="margin-top:14px;">
+        <button type="button" class="btn ghost" id="againBtn">再批改一张</button>
+      </div>
+    </section>
   </div>
 
   <script>
-    const chat = document.getElementById("chat");
-    const input = document.getElementById("input");
-    const form = document.getElementById("form");
+    const BANK = [
+      { term: "up", q: "计算：2/3 × 3/4 = ？（结果用最简分数表示）", answer: "1/2", aliases: ["0.5"], kp: "分数乘法", cause: "计算失误", tip: "分子乘分子、分母乘分母，再约分。", guide: ["先算 2×3 和 3×4。", "得到 6/12。", "约分成最简分数。"], drills: ["4/5 × 5/8", "1/2 × 2/7"] },
+      { term: "up", q: "小明有 3/4 米彩带，用去其中的 2/5，用去了多少米？", answer: "3/10米", aliases: ["3/10"], kp: "分数乘法意义", cause: "概念理解", tip: "求一个数的几分之几用乘法。", guide: ["判断求的是用去还是还剩。", "用去其中的几分之几，用乘法。", "3/4 × 2/5 后约分。"], drills: ["油 4/5 升用去 1/3，用去多少升？", "绳 5/6 米剪去其中 2/5，剪去多少米？"] },
+      { term: "up", q: "小明有 3/4 米彩带，用去 2/5 米，还剩多少米？", answer: "7/20米", aliases: ["7/20"], kp: "异分母分数加减", cause: "计算失误", tip: "异分母先通分再减。", guide: ["分母 4 和 5，通分到 20。", "写成 15/20 − 8/20。", "分子相减。"], drills: ["5/6 − 1/4", "2/3 + 1/6"] },
+      { term: "up", q: "计算：3/5 ÷ 2/5 = ？", answer: "3/2", aliases: ["1.5"], kp: "分数除法", cause: "方法选择", tip: "除以一个数等于乘它的倒数。", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分。"], drills: ["3/4 ÷ 1/2", "1 ÷ 2/5"] },
+      { term: "up", q: "圆的半径是 3 cm，周长是多少？（π 取 3.14）", answer: "18.84cm", aliases: ["18.84"], kp: "圆的周长", cause: "方法选择", tip: "周长 C=2πr。", guide: ["确认求周长。", "写出 C=2πr。", "2×3.14×3。"], drills: ["半径 5cm 求周长", "直径 10cm 求周长"] },
+      { term: "up", q: "圆的半径是 4 cm，面积是多少？（π 取 3.14）", answer: "50.24cm²", aliases: ["50.24"], kp: "圆的面积", cause: "概念理解", tip: "面积 S=πr²。", guide: ["确认求面积。", "半径先平方。", "3.14×16。"], drills: ["半径 2cm 求面积", "半径 5cm 求面积"] },
+      { term: "up", q: "把分数 3/4 写成百分数是？", answer: "75%", aliases: ["75"], kp: "百分数", cause: "概念理解", tip: "3÷4=0.75=75%。", guide: ["先化小数。", "再写百分数。", "带上百分号。"], drills: ["把 1/5 写成百分数", "把 1/4 写成百分数"] },
+      { term: "up", q: "一件上衣原价 200 元，打八折后是多少元？", answer: "160元", aliases: ["160"], kp: "百分数应用（折扣）", cause: "概念理解", tip: "八折=80%，现价=原价×折扣。", guide: ["八折改成 80%。", "200×0.8。", "现价应小于原价。"], drills: ["80 元打七五折", "160 元打七折"] },
+      { term: "up", q: "把比 2:8 化成最简整数比是？", answer: "1:4", aliases: ["1：4"], kp: "比的化简", cause: "计算失误", tip: "前后项同除最大公约数。", guide: ["前项 2、后项 8。", "公约数是 2。", "同除后检查最简。"], drills: ["12:18 化简", "20:5 化简"] },
+      { term: "down", q: "计算：−3 + 8 = ？", answer: "5", aliases: ["+5"], kp: "负数加减", cause: "概念理解", tip: "异号相加，符号随绝对值大的。", guide: ["看符号。", "8 的绝对值更大。", "8−3=5。"], drills: ["−6 + 2", "−4 + 9"] },
+      { term: "down", q: "−8 和 −2 比较，较大的数是？", answer: "-2", aliases: ["−2", "负2"], kp: "负数大小比较", cause: "概念理解", tip: "负数绝对值越小越大。", guide: ["都是负数。", "比较绝对值。", "更靠近 0 的更大。"], drills: ["比较 −1 和 −9", "比较 −5 和 3"] },
+      { term: "down", q: "圆柱底面半径 2 cm、高 5 cm，体积是多少？（π 取 3.14）", answer: "62.8cm³", aliases: ["62.8"], kp: "圆柱体积", cause: "方法选择", tip: "V=πr²h。", guide: ["先算底面积。", "3.14×4=12.56。", "再乘高 5。"], drills: ["半径 3cm 高 4cm 求体积", "底面积 10 高 6 求体积"] },
+      { term: "down", q: "圆锥底面半径 3 cm、高 4 cm，体积是多少？（π 取 3.14）", answer: "37.68cm³", aliases: ["37.68"], kp: "圆锥体积", cause: "方法选择", tip: "V=1/3πr²h。", guide: ["先算 πr²h。", "3.14×9×4。", "再除以 3。"], drills: ["半径 2cm 高 6cm 圆锥体积", "底面积 12 高 5 圆锥体积"] },
+      { term: "down", q: "在比例 2:3 = 8:x 中，x 等于多少？", answer: "12", aliases: ["x=12"], kp: "比例的基本性质", cause: "方法选择", tip: "内项积等于外项积。", guide: ["写出内外项。", "2x=24。", "求出 x。"], drills: ["3:5 = 6:x", "4:x = 2:5"] },
+      { term: "down", q: "一辆汽车 2 小时行驶 120 千米，按正比例，3 小时行驶多少千米？", answer: "180千米", aliases: ["180"], kp: "正比例应用", cause: "概念理解", tip: "路程与时间成正比例。", guide: ["先求速度。", "120÷2=60。", "再乘 3。"], drills: ["4 小时 200 千米，5 小时多少？", "3 支笔 6 元，5 支多少？"] },
+      { term: "down", q: "一个圆的圆心角是 90°，这个扇形占整个圆的几分之几？", answer: "1/4", aliases: ["0.25", "25%"], kp: "扇形", cause: "概念理解", tip: "扇形占圆的比=圆心角/360°。", guide: ["圆心角 90°。", "除以 360。", "约分。"], drills: ["圆心角 60° 占几分之几？", "圆心角 180° 占几分之几？"] },
+      { term: "down", q: "把 7 本书放进 3 个抽屉，至少有一个抽屉不少于几本？（鸽巢问题）", answer: "3", aliases: ["3本"], kp: "鸽巢原理", cause: "方法选择", tip: "7=3×2+1，至少有一抽屉 3 本。", guide: ["先平均分。", "每抽屉先放 2 本。", "剩下 1 本放入某一抽屉。"], drills: ["8 只鸽子进 3 巢，至少一巢几只？", "10 本书放 4 抽屉，至少一抽屉几本？"] }
+    ];
 
-    const mem = { grade: "", subject: "", question: "", answer: "", step: "collect" };
+    const state = { term: "up", item: null, stuAns: "" };
+    const el = {
+      ocrStatus: document.getElementById("ocrStatus"),
+      ocrText: document.getElementById("ocrText"),
+      preview: document.getElementById("preview"),
+      resultPanel: document.getElementById("resultPanel"),
+      verdict: document.getElementById("verdict"),
+      report: document.getElementById("report")
+    };
 
-    const OPENING =
-      "把错题发给我（最好带年级、学科和你的答案），我帮你找出薄弱点，再给你两道巩固题和 3 天小复习计划。\n\n" +
-      "也可以先点下方示例按钮试一试。";
-
-    function addMsg(text, role) {
-      const div = document.createElement("div");
-      div.className = "msg " + role;
-      const who = document.createElement("span");
-      who.className = "who";
-      who.textContent = role === "bot" ? "智能体" : "我";
-      div.appendChild(who);
-      div.appendChild(document.createTextNode(text));
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+    function norm(s) {
+      return String(s || "")
+        .replace(/\s+/g, "")
+        .replace(/[−–—]/g, "-")
+        .replace(/[：]/g, ":")
+        .replace(/[×xX]/g, "*")
+        .replace(/[÷／]/g, "/")
+        .replace(/厘米|米|元|个|本|杯|千米|平方厘米|立方厘米|cm³|cm²|cm|km/gi, "")
+        .replace(/[。．.？?，,！、]/g, "")
+        .toLowerCase();
     }
 
-    function extract(text) {
-      const t = text.replace(/\s+/g, " ").trim();
-      const gradeM = t.match(/(小学)?(五|六)年级|初[一二三]|六年级|五年级/);
-      if (gradeM) mem.grade = gradeM[0].includes("初") ? gradeM[0] : (gradeM[0].includes("五") ? "小学五年级" : "小学六年级");
-      if (/数学/.test(t)) mem.subject = "数学";
-      else if (/语文/.test(t)) mem.subject = "语文";
-      else if (/英语/.test(t)) mem.subject = "英语";
-
-      const ansM = t.match(/(?:我(?:的答案|算成|答|写成|填了|得到)[:：]?\s*)([^\n。]+)/);
-      if (ansM) mem.answer = ansM[1].trim();
-
-      let q = t
-        .replace(/(小学)?(五|六)年级|初[一二三]|数学|语文|英语/g, " ")
-        .replace(/(?:我(?:的答案|算成|答|写成|填了|得到)[:：]?\s*)([^\n。]+)/, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      if (q.length > 6) mem.question = q;
+    function tokens(s) {
+      return norm(s).replace(/[^\u4e00-\u9fa50-9a-z:/*+-]/g, " ").split(/\s+/).filter((w) => w.length >= 1);
     }
 
-    function missing() {
-      const miss = [];
-      if (!mem.grade) miss.push("年级");
-      if (!mem.subject) miss.push("学科");
-      if (!mem.question) miss.push("错题原文");
-      return miss;
+    function matchBank(text) {
+      const pool = BANK.filter((x) => x.term === state.term);
+      const tks = tokens(text);
+      let best = null, bestScore = 0;
+      pool.forEach((item) => {
+        const its = tokens(item.q);
+        let hit = 0;
+        tks.forEach((w) => { if (its.some((k) => k.includes(w) || w.includes(k))) hit += 1; });
+        const score = hit / Math.max(its.length, 3);
+        if (score > bestScore) { bestScore = score; best = item; }
+      });
+      return bestScore >= 0.28 ? best : null;
     }
 
-    function diagnose() {
-      const q = mem.question + " " + mem.answer;
-      let kp = "综合练习";
-      let cause = "概念理解";
-      let tip = "先把题目条件划出来，再选对应方法。";
-      let guide = ["先读题，圈出已知和所求。", "想一想该用哪一类方法。", "分步计算并验算。"];
-      let drills = ["请再出一道同类型题自己练。", "把今天的错题订正步骤写完整。"];
-
-      if (/分数|\/|÷|×|彩带|几分之/.test(q)) {
-        if (/用去其中|的.*分之|×/.test(q) || /求一个数的/.test(q)) {
-          kp = "分数乘法（求一个数的几分之几）";
-          cause = "概念理解";
-          tip = "求一个数的几分之几时用乘法，不是减法。";
-          guide = ["判断：是“用去多少”还是“还剩多少”？", "若求用去的部分：总量 × 几分之几。", "算完要约成最简分数，再对照题意。"];
-          drills = ["一桶油 4/5 升，用去 1/3，用去了多少升？", "一段绳 5/6 米，剪去其中 2/5，剪去多少米？"];
-        } else if (/还剩|减去|减/.test(q) || /1\/20|通分/.test(q)) {
-          kp = "异分母分数加减";
-          cause = "计算失误";
-          tip = "异分母要先通分再加减。";
-          guide = ["写出两个分数的分母。", "通分到最小公倍数。", "分子相减（或加）后再约分。"];
-          drills = ["计算：5/6 − 1/4", "计算：2/3 + 1/6"];
-        } else if (/÷|除以|倒数/.test(q)) {
-          kp = "分数除法与倒数";
-          cause = "方法选择";
-          tip = "除以一个数 = 乘它的倒数。";
-          guide = ["找到除数。", "写出除数的倒数。", "改成乘法并计算约分。"];
-          drills = ["计算：3/4 ÷ 2/5", "一个数的倒数是 5/8，这个数是多少？"];
-        } else {
-          kp = "分数四则混合运算";
-          cause = "方法选择";
-          tip = "先乘除后加减，有括号先算括号。";
-          guide = ["标出运算顺序。", "先算乘除。", "再通分做加减。"];
-          drills = ["计算：1/2 + 1/3 × 1/4", "计算：(1/2 + 1/3) × 6/5"];
-        }
-      } else if (/圆|周长|面积|半径|直径|π|pi/i.test(q)) {
-        if (/面积|πr²|r\^?2|平方/.test(q) && /周长|用了/.test(q)) {
-          kp = "圆的周长与面积公式区分";
-          cause = "方法选择";
-          tip = "周长 C=2πr 或 πd；面积 S=πr²。";
-        } else if (/周长/.test(q)) {
-          kp = "圆的周长";
-          cause = "方法选择";
-          tip = "C=2πr（或 πd）。";
-        } else {
-          kp = "圆的面积";
-          cause = "概念理解";
-          tip = "S=πr²，半径要先平方。";
-        }
-        guide = ["确认题目求周长还是面积。", "写出对应公式。", "代入 π 与 r 计算并带单位。"];
-        drills = ["半径 5cm，求周长（π=3.14）。", "半径 4cm，求面积（π=3.14）。"];
-      } else if (/百分|折扣|八折|%|百分之/.test(q)) {
-        kp = "百分数的意义与应用";
-        cause = "概念理解";
-        tip = "几折 = 百分之几十；求现价用 原价 × 折扣。";
-        guide = ["把折扣改成百分数（八折=80%）。", "列式：原价 × 80%。", "验算：现价应比原价小。"];
-        drills = ["原价 160 元，打七五折后多少元？", "把 3/5 写成百分数。"];
-      } else if (/比\s|化简|：|:/.test(q)) {
-        kp = "比的意义与化简";
-        cause = "计算失误";
-        tip = "前后项同除以最大公约数，化成最简整数比。";
-        guide = ["写出比的前项和后项。", "找最大公约数。", "同除后检查是否最简。"];
-        drills = ["把 12:18 化成最简整数比。", "甲 20、乙 5，甲:乙=？"];
+    function extractAns(text, item) {
+      const raw = String(text || "");
+      const labeled = raw.match(/(?:答|解|作答|答案)\s*[:：=]?\s*([^\n。]{1,20})/);
+      if (labeled) return labeled[1].trim();
+      const cands = [item.answer].concat(item.aliases || []);
+      const ntext = norm(raw);
+      for (const c of cands) {
+        if (c && ntext.includes(norm(c))) return c;
       }
-
-      return { kp, cause, tip, guide, drills };
+      const nums = raw.match(/-?\d+\s*[:：/／.]\s*\d+%?|-?\d+(?:\.\d+)?%?|负\d+/g);
+      return nums && nums.length ? nums[nums.length - 1] : "";
     }
 
-    function buildReply(userText) {
-      extract(userText);
-      const miss = missing();
-      if (miss.length) {
-        const ask = miss.slice(0, 2).join("、");
-        return `我还需要补充：${ask}。\n请一次性发给我，例如：「六年级数学。题目……。我的答案是……。」`;
+    function sameAns(user, item) {
+      const u = norm(user);
+      if (!u) return false;
+      return [item.answer].concat(item.aliases || []).map(norm).some((c) => c && (u === c || u.includes(c) || c.includes(u)));
+    }
+
+    function reportOf(item, userAns, ok) {
+      if (ok) {
+        return (
+          `【匹配题目】${item.q}\n` +
+          `【识别作答】${userAns || "已从照片中识别到正确答案"}\n` +
+          `【知识点】${item.kp}\n` +
+          `【掌握程度】掌握较好。这道题做对了，说明「${item.kp}」基本过关。\n` +
+          `【提醒】${item.tip}\n\n` +
+          `【巩固一下】\n1. ${item.drills[0]}\n2. ${item.drills[1]}\n\n` +
+          `【3天小计划】\n- Day1：把本题步骤再写一遍，确认公式或方法。\n- Day2：做上面 2 道同类题。\n- Day3：限时口述思路，自我检测。`
+        );
       }
-
-      const d = diagnose();
-      const plan =
-        `【3天复习计划】\n` +
-        `- Day1（15～20分钟）：复习「${d.kp}」概念/公式，订正本错题并写出完整步骤。\n` +
-        `- Day2（15～20分钟）：完成巩固题1、巩固题2，不会的只看提示不看答案思路。\n` +
-        `- Day3（15～20分钟）：合上材料，口述解题思路，再限时做 2 道同类题自我检测。`;
-
       return (
-        `【知识点】${d.kp}\n` +
-        `【错因类型】${d.cause}（${d.tip}）\n` +
-        `【诊断说明】结合你的作答「${mem.answer || "未填写"}」，更可能卡在方法或概念上。先别急着看最终答案，我们一步步来。\n\n` +
-        `【订正引导】\n1. ${d.guide[0]}\n2. ${d.guide[1]}\n3. ${d.guide[2]}\n` +
-        `想好每一步后再算。如果你已经订正过、只要完整讲解，回复「只要讲解」。\n\n` +
-        `【巩固题1】${d.drills[0]}\n` +
-        `【巩固题2】${d.drills[1]}\n` +
-        `（巩固题先不给标准答案，做完再来对。）\n\n` +
-        plan
+        `【匹配题目】${item.q}\n` +
+        `【识别作答】${userAns || "照片里没有稳定识别到作答"}\n` +
+        `【知识点】${item.kp}\n` +
+        `【掌握程度】该知识点还需巩固（可能原因：${item.cause}）。\n` +
+        `【分析】${item.tip}\n\n` +
+        `【订正引导】\n1. ${item.guide[0]}\n2. ${item.guide[1]}\n3. ${item.guide[2]}\n` +
+        `先按步骤自己再算，标准得数先不写在这里。\n\n` +
+        `【巩固一下】\n1. ${item.drills[0]}\n2. ${item.drills[1]}\n\n` +
+        `【3天小计划】\n- Day1：订正本题，写清步骤。\n- Day2：完成 2 道巩固题。\n- Day3：合上材料口述思路后再做 2 道同类题。`
       );
     }
 
-    function replyExplain() {
-      const d = diagnose();
-      return (
-        `好的，给你完整思路提纲（仍建议你自己算一遍）：\n` +
-        `1) 知识点：${d.kp}\n` +
-        `2) 关键提醒：${d.tip}\n` +
-        `3) 步骤：${d.guide.join(" → ")}\n` +
-        `4) 算完后用估算或代入验算。\n\n` +
-        `需要的话继续发下一道错题。`
-      );
+    function showResult(item, userAns, ok, note) {
+      state.item = item;
+      state.stuAns = userAns;
+      el.resultPanel.classList.remove("hidden");
+      el.verdict.className = "verdict " + (ok ? "ok" : (userAns ? "bad" : "mid"));
+      if (!item) {
+        el.verdict.textContent = "还没有匹配到本学期题目，请把识别文字改清楚，或换一张更清晰的作业照片。";
+        el.report.textContent = note || "";
+        return;
+      }
+      el.verdict.textContent = ok
+        ? "批改：正确。这道作业做对了，下面看知识点掌握情况。"
+        : (userAns
+          ? "批改：与标准答案不一致。下面分析相关知识点掌握程度。"
+          : "已匹配到题目，但作答识别不稳定。请把解答拍清楚后再传一次。");
+      el.report.textContent = item ? reportOf(item, userAns, ok) : "";
+      el.resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-      addMsg(text, "user");
-      input.value = "";
-      setTimeout(() => {
-        const out = /只要讲解|完整解析|直接讲/.test(text) && mem.question
-          ? replyExplain()
-          : buildReply(text);
-        addMsg(out, "bot");
-      }, 280);
-    });
-
-    document.getElementById("quick").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-q]");
+    document.getElementById("termRow").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-term]");
       if (!btn) return;
-      input.value = btn.getAttribute("data-q");
-      form.requestSubmit();
+      document.querySelectorAll("#termRow .chip").forEach((b) => b.classList.remove("on"));
+      btn.classList.add("on");
+      state.term = btn.getAttribute("data-term");
     });
 
-    addMsg(OPENING, "bot");
+    async function ensureOcr() {
+      if (window.Tesseract) return;
+      el.ocrStatus.textContent = "正在准备识别（首次大约十几秒）…";
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("load"));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function gradePhoto(file) {
+      el.preview.src = URL.createObjectURL(file);
+      el.preview.classList.remove("hidden");
+      el.ocrStatus.textContent = "正在识别作业照片…";
+      try {
+        await ensureOcr();
+        const { data } = await window.Tesseract.recognize(file, "chi_sim+eng", {
+          logger: (m) => {
+            if (m.status === "recognizing text" && m.progress) {
+              el.ocrStatus.textContent = `识别中 ${Math.round(m.progress * 100)}%`;
+            }
+          }
+        });
+        const text = (data && data.text ? data.text : "").replace(/\n{2,}/g, "\n").trim();
+        el.ocrText.value = text;
+        if (!text) {
+          el.ocrStatus.textContent = "没有识别到文字，请再拍一张清楚一些的。";
+          return;
+        }
+        autoGrade(text);
+      } catch (_) {
+        el.ocrStatus.textContent = "识别没有成功。请换个角度再拍，或把题目和答案写进识别框后点文字区域下方会自动再批改。";
+      }
+    }
+
+    function autoGrade(text) {
+      const item = matchBank(text);
+      if (!item) {
+        el.ocrStatus.textContent = "文字已识别，但还没对上本学期题目。可改几个字后再点识别框外面，或确认上册/下册选对了。";
+        showResult(null, "", false);
+        return;
+      }
+      const ans = extractAns(text, item);
+      const ok = sameAns(ans, item);
+      el.ocrStatus.textContent = "已自动批改。";
+      showResult(item, ans, ok);
+    }
+
+    document.getElementById("file").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) gradePhoto(file);
+    });
+
+    el.ocrText.addEventListener("change", () => {
+      const text = el.ocrText.value.trim();
+      if (text.length > 4) autoGrade(text);
+    });
+
+    document.getElementById("againBtn").addEventListener("click", () => {
+      el.resultPanel.classList.add("hidden");
+      el.ocrText.value = "";
+      el.ocrStatus.textContent = "选好范围后上传照片，将自动批改。";
+      el.preview.classList.add("hidden");
+      document.getElementById("file").value = "";
+    });
   </script>
 </body>
 </html>
