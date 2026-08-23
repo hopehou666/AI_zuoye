@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>分数除法习题学伴</title>
+  <title>分数除法习题 学伴智能体</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
@@ -69,8 +69,8 @@
 <body>
   <div class="wrap">
     <a class="home-link" href="../index.html">← 返回导航</a>
-    <div class="brand"><i></i>分数除法习题学伴</div>
-    <span class="tag">六年级数学 · 智能体</span>
+    <div class="brand"><i></i>分数除法习题 学伴智能体</div>
+    <span class="tag">六年级数学 · 分数除法</span>
     <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案，请学伴批改并分析掌握程度。</p>
 
     <section class="panel">
@@ -93,7 +93,7 @@
   </div>
 
   <script>
-    const SYSTEM_PROMPT = `你是「分数除法习题学伴」，只服务六年级数学里的一个知识点：分数除法。
+    const SYSTEM_PROMPT = `你是「分数除法习题 学伴智能体」，只服务六年级数学里的一个知识点：分数除法。
 
 学生可以做两件事：
 1. 问知识点：你用六年级能听懂的话讲解。
@@ -129,7 +129,7 @@
       { key: "3 ÷ 3/4", guide: ["3/4 的倒数是 4/3。", "3 × 4/3。", "约分成 4。"], drills: ["2 ÷ 1/5", "6 ÷ 2/3"] }
     ];
 
-    const HELLO = "你好！我是「分数除法习题学伴」，只练六年级数学的分数除法。\n\n你可以：\n1. 问知识点，比如：分数除以整数怎么算？\n2. 把题目和你的答案发给我，我帮你批改。\n\n例如：4/7 ÷ 3，我写 12/7";
+    const HELLO = "你好！我是「分数除法习题 学伴智能体」，只练六年级数学的分数除法。\n\n你可以：\n1. 问知识点，比如：分数除以整数怎么算？\n2. 把题目和你的答案发给我，我帮你批改。\n\n例如：4/7 ÷ 3，我写 12/7";
 
     document.getElementById("promptText").textContent = SYSTEM_PROMPT;
 
