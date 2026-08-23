@@ -273,35 +273,300 @@
     let ocrWorker = null;
     let ocrReady = false;
 
-    function preprocessImage(file) {
+    function loadFileImage(file) {
       return new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => {
-          let w = img.width;
-          let h = img.height;
-          const minSide = 1400;
-          const scale = Math.max(minSide / Math.min(w, h), 1);
-          w = Math.round(w * scale);
-          h = Math.round(h * scale);
-          const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0, w, h);
-          const data = ctx.getImageData(0, 0, w, h);
-          const p = data.data;
-          for (let i = 0; i < p.length; i += 4) {
-            const g = 0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2];
-            const v = g < 150 ? 0 : 255;
-            p[i] = p[i + 1] = p[i + 2] = v;
-          }
-          ctx.putImageData(data, 0, 0);
-          canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("prep")), "image/png");
-        };
+        img.onload = () => resolve(img);
         img.onerror = () => reject(new Error("img"));
         img.src = URL.createObjectURL(file);
+      });
+    }
+
+    function drawScaled(img, minSide) {
+      let w = img.width;
+      let h = img.height;
+      const scale = Math.max(minSide / Math.min(w, h), 1);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      return { canvas, ctx, w, h };
+    }
+
+    function otsu(gray) {
+      const hist = new Array(256).fill(0);
+      for (let i = 0; i < gray.length; i++) hist[gray[i]]++;
+      const total = gray.length;
+      let sum = 0;
+      for (let i = 0; i < 256; i++) sum += i * hist[i];
+      let sumB = 0, wB = 0, best = 0, thresh = 130;
+      for (let t = 0; t < 256; t++) {
+        wB += hist[t];
+        if (!wB) continue;
+        const wF = total - wB;
+        if (!wF) break;
+        sumB += t * hist[t];
+        const diff = sumB / wB - (sum - sumB) / wF;
+        const between = wB * wF * diff * diff;
+        if (between > best) { best = between; thresh = t; }
+      }
+      return thresh;
+    }
+
+    function imageToBinary(ctx, w, h) {
+      const data = ctx.getImageData(0, 0, w, h);
+      const p = data.data;
+      const gray = new Uint8Array(w * h);
+      for (let i = 0, j = 0; i < p.length; i += 4, j++) {
+        gray[j] = (0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2]) | 0;
+      }
+      const thresh = Math.min(otsu(gray), 125);
+      const bin = new Uint8Array(w * h);
+      for (let i = 0; i < gray.length; i++) bin[i] = gray[i] < thresh ? 0 : 255;
+      const spanNeed = Math.round(w * 0.55);
+      for (let y = 0; y < h; y++) {
+        let ink = 0, first = -1, last = -1;
+        for (let x = 0; x < w; x++) {
+          if (bin[y * w + x] === 0) {
+            ink++;
+            if (first < 0) first = x;
+            last = x;
+          }
+        }
+        if (ink > spanNeed && last - first > spanNeed) {
+          for (let x = 0; x < w; x++) bin[y * w + x] = 255;
+        }
+      }
+      const fat = new Uint8Array(bin.length);
+      fat.fill(255);
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          let ink = false;
+          for (let dy = -1; dy <= 1 && !ink; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (bin[(y + dy) * w + x + dx] === 0) { ink = true; break; }
+            }
+          }
+          if (ink) fat[y * w + x] = 0;
+        }
+      }
+      return fat;
+    }
+
+    function binaryCanvas(bin, w, h) {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      const img = ctx.createImageData(w, h);
+      for (let i = 0; i < bin.length; i++) {
+        const v = bin[i];
+        img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+        img.data[i * 4 + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      return c;
+    }
+
+    function findBlobs(bin, w, h) {
+      const seen = new Uint8Array(w * h);
+      const blobs = [];
+      const stack = [];
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const start = y * w + x;
+          if (bin[start] || seen[start]) continue;
+          let minx = x, maxx = x, miny = y, maxy = y, area = 0;
+          stack.push(start);
+          seen[start] = 1;
+          while (stack.length) {
+            const p = stack.pop();
+            const px = p % w;
+            const py = (p - px) / w;
+            area++;
+            if (px < minx) minx = px;
+            if (px > maxx) maxx = px;
+            if (py < miny) miny = py;
+            if (py > maxy) maxy = py;
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                if (!dx && !dy) continue;
+                const nx = px + dx, ny = py + dy;
+                if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+                const np = ny * w + nx;
+                if (bin[np] || seen[np]) continue;
+                seen[np] = 1;
+                stack.push(np);
+              }
+            }
+          }
+          const bw = maxx - minx + 1;
+          const bh = maxy - miny + 1;
+          if (area < 28 || bh < 10 || bw > w * 0.38 || bh > h * 0.42 || bw / bh > 5.2) continue;
+          blobs.push({
+            minx, maxx, miny, maxy, area,
+            cx: (minx + maxx) / 2,
+            cy: (miny + maxy) / 2
+          });
+        }
+      }
+      return blobs;
+    }
+
+    function mergeSideDigits(blobs) {
+      const sorted = blobs.slice().sort((a, b) => a.cx - b.cx);
+      const out = [];
+      sorted.forEach((c) => {
+        const last = out[out.length - 1];
+        if (last) {
+          const yHit = Math.min(last.maxy, c.maxy) - Math.max(last.miny, c.miny);
+          const minH = Math.min(last.maxy - last.miny, c.maxy - c.miny) || 1;
+          const gap = c.minx - last.maxx;
+          const avgW = ((last.maxx - last.minx) + (c.maxx - c.minx)) / 2;
+          if (yHit > minH * 0.4 && gap < avgW * 0.9 && gap > -avgW * 0.35) {
+            last.minx = Math.min(last.minx, c.minx);
+            last.maxx = Math.max(last.maxx, c.maxx);
+            last.miny = Math.min(last.miny, c.miny);
+            last.maxy = Math.max(last.maxy, c.maxy);
+            last.area += c.area;
+            last.cx = (last.minx + last.maxx) / 2;
+            last.cy = (last.miny + last.maxy) / 2;
+            return;
+          }
+        }
+        out.push({
+          minx: c.minx, maxx: c.maxx, miny: c.miny, maxy: c.maxy,
+          area: c.area, cx: c.cx, cy: c.cy
+        });
+      });
+      return out;
+    }
+
+    function pairFractions(blobs) {
+      const used = new Set();
+      const fracs = [];
+      for (let i = 0; i < blobs.length; i++) {
+        if (used.has(i)) continue;
+        let best = -1, bestScore = 0;
+        for (let j = 0; j < blobs.length; j++) {
+          if (i === j || used.has(j)) continue;
+          const a = blobs[i], b = blobs[j];
+          const overlap = Math.min(a.maxx, b.maxx) - Math.max(a.minx, b.minx);
+          const minW = Math.min(a.maxx - a.minx, b.maxx - b.minx) || 1;
+          if (overlap < minW * 0.3) continue;
+          const above = a.cy < b.cy ? a : b;
+          const below = a.cy < b.cy ? b : a;
+          const gap = below.miny - above.maxy;
+          const avgH = ((a.maxy - a.miny) + (b.maxy - b.miny)) / 2;
+          if (gap < -avgH * 0.25 || gap > avgH * 2.4) continue;
+          const score = overlap / minW - Math.abs(gap - avgH * 0.35) / (avgH + 1);
+          if (score > bestScore) { bestScore = score; best = j; }
+        }
+        if (best >= 0 && bestScore > 0.12) {
+          const a = blobs[i], b = blobs[best];
+          const num = a.cy < b.cy ? a : b;
+          const den = a.cy < b.cy ? b : a;
+          fracs.push({ num, den, cx: (num.cx + den.cx) / 2 });
+          used.add(i);
+          used.add(best);
+        }
+      }
+      const ints = blobs.filter((_, i) => !used.has(i));
+      return { fracs, ints };
+    }
+
+    async function readDigits(worker, src, box) {
+      const pad = 10;
+      const sx = Math.max(0, box.minx - pad);
+      const sy = Math.max(0, box.miny - pad);
+      const sw = Math.min(src.width, box.maxx + pad) - sx;
+      const sh = Math.min(src.height, box.maxy + pad) - sy;
+      if (sw < 4 || sh < 4) return "";
+      const scale = Math.max(4, 90 / Math.min(sw, sh));
+      const out = document.createElement("canvas");
+      out.width = Math.max(40, Math.round(sw * scale));
+      out.height = Math.max(40, Math.round(sh * scale));
+      const ctx = out.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(src, sx, sy, sw, sh, 0, 0, out.width, out.height);
+      const modes = ["7", "8", "10"];
+      for (let i = 0; i < modes.length; i++) {
+        await worker.setParameters({
+          tessedit_char_whitelist: "0123456789",
+          tessedit_pageseg_mode: modes[i]
+        });
+        const { data } = await worker.recognize(out);
+        const d = (data && data.text ? data.text : "").replace(/\D/g, "");
+        if (d) return d;
+      }
+      return "";
+    }
+
+    function joinExpr(terms) {
+      const clean = terms.filter((t) => t && t.n && (t.kind !== "frac" || t.d));
+      if (clean.length < 2) return "";
+      const bit = (t) => (t.kind === "frac" ? t.n + "/" + t.d : t.n);
+      if (clean.length === 2) return bit(clean[0]) + " ÷ " + bit(clean[1]);
+      return bit(clean[0]) + " ÷ " + bit(clean[1]) + " = " + bit(clean[2]);
+    }
+
+    function assembleExpr(fracs, ints) {
+      const fTerms = fracs
+        .filter((f) => f.n && f.d)
+        .map((f) => ({ kind: "frac", n: f.n, d: f.d, cx: f.cx }));
+      const iTerms = ints
+        .filter((x) => x.n)
+        .map((x) => ({ kind: "int", n: x.n, cx: x.cx }));
+      if (fTerms.length >= 2 && iTerms.length) {
+        fTerms.sort((a, b) => a.cx - b.cx);
+        const left = fTerms[0].cx;
+        const right = fTerms[fTerms.length - 1].cx;
+        const mid = iTerms.filter((x) => x.cx > left && x.cx < right);
+        const pick = mid[0] || iTerms.slice().sort((a, b) => a.cx - b.cx)[0];
+        return joinExpr(fTerms.concat([pick]).sort((a, b) => a.cx - b.cx).slice(0, 3));
+      }
+      return joinExpr(fTerms.concat(iTerms).sort((a, b) => a.cx - b.cx).slice(0, 3));
+    }
+
+    async function readStackedDivision(file, worker) {
+      const img = await loadFileImage(file);
+      const { canvas, ctx, w, h } = drawScaled(img, 1200);
+      const bin = imageToBinary(ctx, w, h);
+      const src = binaryCanvas(bin, w, h);
+      let blobs = mergeSideDigits(findBlobs(bin, w, h));
+      if (blobs.length > 10) {
+        const areas = blobs.map((b) => b.area).sort((a, b) => a - b);
+        const med = areas[Math.floor(areas.length / 2)] || 1;
+        blobs = blobs.filter((b) => b.area > med * 0.12 && b.area < med * 14);
+      }
+      const paired = pairFractions(blobs);
+      if (!paired.fracs.length) return "";
+      for (let i = 0; i < paired.fracs.length; i++) {
+        const f = paired.fracs[i];
+        f.n = await readDigits(worker, src, f.num);
+        f.d = await readDigits(worker, src, f.den);
+      }
+      for (let i = 0; i < paired.ints.length; i++) {
+        paired.ints[i].n = await readDigits(worker, src, paired.ints[i]);
+      }
+      return assembleExpr(paired.fracs, paired.ints);
+    }
+
+    function preprocessImage(file) {
+      return loadFileImage(file).then((img) => {
+        const { canvas, ctx, w, h } = drawScaled(img, 1400);
+        const bin = imageToBinary(ctx, w, h);
+        const src = binaryCanvas(bin, w, h);
+        return new Promise((resolve, reject) => {
+          src.toBlob((blob) => blob ? resolve(blob) : reject(new Error("prep")), "image/png");
+        });
       });
     }
 
@@ -335,19 +600,32 @@
       el.preview.src = URL.createObjectURL(file);
       el.preview.classList.remove("hidden");
       el.resultPanel.classList.add("hidden");
-      el.ocrStatus.textContent = "正在识别算式…";
+      el.ocrStatus.textContent = "正在按分数线拆开识别…";
       try {
-        const prepared = await preprocessImage(file);
         const worker = await ensureOcr();
+        const stacked = await readStackedDivision(file, worker);
+        if (stacked && parseDivEq(stacked)) {
+          el.ocrText.value = stacked;
+          document.getElementById("exprLine").value = stacked;
+          el.ocrStatus.textContent = "已读成：" + stacked;
+          autoGrade(stacked);
+          return;
+        }
+        el.ocrStatus.textContent = "正在整图再认一次…";
+        await worker.setParameters({
+          tessedit_char_whitelist: "0123456789/=-+. ",
+          tessedit_pageseg_mode: "6"
+        });
+        const prepared = await preprocessImage(file);
         const { data } = await worker.recognize(prepared);
         const text = (data && data.text ? data.text : "").replace(/\n{2,}/g, "\n").trim();
         el.ocrText.value = text;
-        if (!/\d/.test(text)) {
-          el.ocrStatus.textContent = "手写分数不太好认。请在上面一行补全算式，例如 4/7 ÷ 3 = 12/7，再点「批改」。";
-          document.getElementById("exprLine").focus();
+        if (parseDivEq(text) || matchBank(text)) {
+          autoGrade(text);
           return;
         }
-        autoGrade(text);
+        el.ocrStatus.textContent = "手写竖式分数还是不太好认。请在上面一行写出算式，例如 4/7 ÷ 3 = 12/7，再点「批改」。";
+        document.getElementById("exprLine").focus();
       } catch (_) {
         el.ocrStatus.textContent = "识别没有成功。请在上面一行写出算式后点「批改」。";
         document.getElementById("exprLine").focus();
