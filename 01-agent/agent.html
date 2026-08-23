@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <title>分数除法习题 学伴智能体</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -71,7 +72,7 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题 学伴智能体</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。不用登录。能连上免费接口就用大模型回答，连不上就本地批改。</p>
+    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。不会弹出登录窗口。能连上免费接口就用大模型，连不上就本地批改。</p>
 
     <section class="panel">
       <div class="chat" id="chat"></div>
@@ -80,7 +81,7 @@
         <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
         <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
-      <p class="desc" id="llmStatus" style="margin:10px 0 0;">发送后会先试免费接口，不用登录。</p>
+      <p class="desc" id="llmStatus" style="margin:10px 0 0;">不用注册、不用登录。发送后先试免费接口，失败就本地批改。</p>
       <div class="composer">
         <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
         <button type="button" class="btn" id="sendBtn">发送</button>
