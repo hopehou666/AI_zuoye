@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
@@ -71,7 +72,7 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题 学伴智能体</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案，请学伴批改并分析掌握程度。</p>
+    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。学伴会调用免费大模型来回答；连不上时自动用本地规则批改。</p>
 
     <section class="panel">
       <div class="chat" id="chat"></div>
@@ -80,6 +81,7 @@
         <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
         <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
+      <p class="desc" id="llmStatus" style="margin:10px 0 0;">正在准备免费大模型…</p>
       <div class="composer">
         <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
         <button type="button" class="btn" id="sendBtn">发送</button>
@@ -135,7 +137,10 @@
 
     const chatEl = document.getElementById("chat");
     const talkEl = document.getElementById("talk");
+    const statusEl = document.getElementById("llmStatus");
     const pending = { left: "", right: "" };
+    const history = [];
+    let busy = false;
 
     function gcd(a, b) {
       a = Math.abs(a); b = Math.abs(b);
@@ -322,22 +327,86 @@
     function addMsg(role, text) {
       const box = document.createElement("div");
       box.className = "msg " + (role === "me" ? "me" : "bot");
-      box.innerHTML = '<div class="who">' + (role === "me" ? "学生" : "学伴") + "</div>";
-      box.appendChild(document.createTextNode(text));
+      const who = document.createElement("div");
+      who.className = "who";
+      who.textContent = role === "me" ? "学生" : "学伴";
+      const body = document.createElement("div");
+      body.className = "body";
+      body.textContent = text;
+      box.appendChild(who);
+      box.appendChild(body);
       chatEl.appendChild(box);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return body;
+    }
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function llmText(res) {
+      if (res == null) return "";
+      if (typeof res === "string") return res.trim();
+      if (typeof res.text === "string") return res.text.trim();
+      if (res.message && typeof res.message.content === "string") return res.message.content.trim();
+      if (typeof res.content === "string") return res.content.trim();
+      return String(res).trim();
+    }
+
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))
+      ]);
+    }
+
+    async function askModel(userText, local) {
+      if (!window.puter || !puter.ai || !puter.ai.chat) throw new Error("no-puter");
+      const extra = local
+        ? "\n\n【本地已经算好，数字必须用这份，不要改对错和正确答案】\n" + local
+        : "";
+      const messages = [{ role: "system", content: SYSTEM_PROMPT + extra }]
+        .concat(history.slice(-6))
+        .concat([{ role: "user", content: userText }]);
+      let raw;
+      try {
+        raw = await withTimeout(puter.ai.chat(messages, { model: "gpt-4o-mini" }), 16000);
+      } catch (_) {
+        raw = await withTimeout(puter.ai.chat(messages), 16000);
+      }
+      const text = llmText(raw);
+      if (!text) throw new Error("empty");
+      return text;
+    }
+
+    async function send(text) {
+      const t = String(text || "").trim();
+      if (!t || busy) return;
+      busy = true;
+      addMsg("me", t);
+      talkEl.value = "";
+      const wait = addMsg("bot", "正在调用免费大模型…");
+      const local = reply(t);
+      try {
+        const modelText = await askModel(t, local);
+        wait.textContent = modelText;
+        history.push({ role: "user", content: t });
+        history.push({ role: "assistant", content: modelText });
+        setStatus("已接通免费大模型。");
+      } catch (_) {
+        wait.textContent = local;
+        history.push({ role: "user", content: t });
+        history.push({ role: "assistant", content: local });
+        setStatus("免费大模型暂时连不上，已用本地规则回答。");
+      }
+      busy = false;
+      talkEl.focus();
       chatEl.scrollTop = chatEl.scrollHeight;
     }
 
-    function send(text) {
-      const t = String(text || "").trim();
-      if (!t) return;
-      addMsg("me", t);
-      addMsg("bot", reply(t));
-      talkEl.value = "";
-      talkEl.focus();
-    }
-
     addMsg("bot", HELLO);
+    if (window.puter && puter.ai) setStatus("免费大模型已就绪，发送后会先问模型。");
+    else setStatus("正在载入免费大模型。载入失败时仍可用本地规则批改。");
     document.getElementById("sendBtn").addEventListener("click", () => send(talkEl.value));
     talkEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(talkEl.value); });
     document.querySelectorAll(".chip").forEach((btn) => {
