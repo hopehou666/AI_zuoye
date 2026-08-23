@@ -276,6 +276,15 @@
           note: "我按 " + m[1] + " ÷ " + m[2] + " = " + m[3] + " 来批改。如果题目是「分数 " + m[1] + "/" + m[2] + " 除以另一个数」，请补上除数。"
         };
       }
+      m = t.match(/^(-?\d+)\/(-?\d+)$/);
+      if (m) {
+        return {
+          left: parseFrac(m[1]),
+          right: parseFrac(m[2]),
+          stu: "",
+          note: "我按 " + m[1] + " ÷ " + m[2] + " 来理解。若你写的是分数 " + m[1] + "/" + m[2] + "，请再补上除数和你的答案。"
+        };
+      }
       return null;
     }
 
@@ -313,6 +322,11 @@
         if (!hit.stu) {
           pending.left = hit.left;
           pending.right = hit.right;
+          const p0 = buildGrade(hit.left, hit.right, "");
+          if (p0) {
+            p0.note = hit.note || "";
+            return reportOf(p0) + "\n\n还没有看到你的得数。请把你当时写的答案发给我。";
+          }
           return "题目我记下了：" + showFrac(hit.left) + " ÷ " + showFrac(hit.right) + "。请把你的答案发给我，我再帮你批改。";
         }
         pending.left = pending.right = "";
@@ -330,6 +344,7 @@
       const who = document.createElement("div");
       who.className = "who";
       who.textContent = role === "me" ? "学生" : "学伴";
+      who.dataset.role = role;
       const body = document.createElement("div");
       body.className = "body";
       body.textContent = text;
@@ -390,14 +405,16 @@
       try {
         const modelText = await askModel(t, local);
         wait.textContent = modelText;
+        wait.parentNode.querySelector(".who").textContent = "学伴 · 大模型";
         history.push({ role: "user", content: t });
         history.push({ role: "assistant", content: modelText });
         setStatus("已接通免费大模型。");
       } catch (_) {
         wait.textContent = local;
+        wait.parentNode.querySelector(".who").textContent = "学伴 · 本地规则";
         history.push({ role: "user", content: t });
         history.push({ role: "assistant", content: local });
-        setStatus("免费大模型暂时连不上，已用本地规则回答。");
+        setStatus("免费大模型没连上（可能要登录 Puter 或网络不通），这次是本地规则在回答。");
       }
       busy = false;
       talkEl.focus();
