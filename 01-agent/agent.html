@@ -224,7 +224,7 @@
         qShow: key, leftShow, rightShow, rec, answer,
         stuShow: stuRaw ? (stu ? showFrac(stu) : stuRaw) : "",
         stu, ok: !!(stu && sameFrac(stu, parseFrac(answer))),
-        kp: describeKp(left, right), guide: tip.guide, drills: tip.drills
+        kp: describeKp(left, right), guide: tip.guide, drills: tip.drills, note: ""
       };
       p.diag = diagnose(p);
       return p;
@@ -232,7 +232,8 @@
 
     function reportOf(p) {
       const judge = !p.stuShow ? "还没有填写学生答案" : (p.ok ? "正确" : "错误");
-      return [
+      const head = p.note ? [p.note, ""] : [];
+      return head.concat([
         "【题目】" + p.qShow,
         "【学生答案】" + (p.stuShow || "未填写"),
         "【正确答案】" + p.answer,
@@ -254,14 +255,23 @@
         "【巩固一下】",
         "1. " + p.drills[0],
         "2. " + p.drills[1]
-      ].join("\n");
+      ]).join("\n");
     }
 
     function parseProblem(text) {
       const t = String(text || "").replace(/\s+/g, "").replace(/[÷:／]/g, "÷").replace(/＝/g, "=");
-      const m = t.match(/(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)(?:[,，。;；]*?(?:=|我写了?|答案是|答)(-?\d+(?:\/-?\d+)?))?/);
-      if (!m) return null;
-      return { left: parseFrac(m[1]), right: parseFrac(m[2]), stu: m[3] || "" };
+      let m = t.match(/(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)(?:[,，。;；]*?(?:=|我写了?|答案是|答)(-?\d+(?:\/-?\d+)?))?/);
+      if (m) return { left: parseFrac(m[1]), right: parseFrac(m[2]), stu: m[3] || "", note: "" };
+      m = t.match(/^(-?\d+)\/(-?\d+)=(-?\d+(?:\/-?\d+)?)$/);
+      if (m) {
+        return {
+          left: parseFrac(m[1]),
+          right: parseFrac(m[2]),
+          stu: m[3],
+          note: "我按 " + m[1] + " ÷ " + m[2] + " = " + m[3] + " 来批改。如果题目是「分数 " + m[1] + "/" + m[2] + " 除以另一个数」，请补上除数。"
+        };
+      }
+      return null;
     }
 
     function knowledgeReply(text) {
@@ -302,9 +312,11 @@
         }
         pending.left = pending.right = "";
         const p = buildGrade(hit.left, hit.right, hit.stu);
-        return p ? reportOf(p) : "算式我还没读清，请写成 4/7 ÷ 3，我写 12/7。";
+        if (!p) return "算式我还没读清，请写成 4/7 ÷ 3，我写 12/7。";
+        p.note = hit.note || "";
+        return reportOf(p);
       }
-      return "请问分数除法知识点，或把题目和你的答案发给我。\n例如：分数除以整数怎么算？\n例如：4/7 ÷ 3，我写 12/7";
+      return "你刚才写的是「" + String(text || "").trim() + "」。这还不是完整的分数除法。\n请写成：被除数 ÷ 除数，我写 答案。\n例如：3 ÷ 1/4，我写 12\n例如：4/7 ÷ 3，我写 12/7";
     }
 
     function addMsg(role, text) {
