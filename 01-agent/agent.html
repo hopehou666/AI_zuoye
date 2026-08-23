@@ -72,7 +72,7 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题 学伴智能体</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。本页已换成免登录大模型，不会弹出登录窗口。连不上时才用本地批改。</p>
+    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。数学题由精确规则核算，开放表达交给免登录大模型，避免模型擅自改题或改答案。</p>
 
     <section class="panel">
       <div class="chat" id="chat"></div>
@@ -81,7 +81,7 @@
         <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
         <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
-      <p class="desc" id="llmStatus" style="margin:10px 0 0;">不用注册、不用登录。发送后先连免费大模型，失败就本地批改。</p>
+      <p class="desc" id="llmStatus" style="margin:10px 0 0;">不用注册、不用登录。题目和答案以精确核算结果为准。</p>
       <div class="composer">
         <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
         <button type="button" class="btn" id="sendBtn">发送</button>
@@ -425,14 +425,34 @@
       }
     }
 
+    function needsExactMathReply(text) {
+      const compact = String(text || "").replace(/\s+/g, "");
+      const pendingAnswer = pending.left && pending.right &&
+        parseFrac(compact.replace(/[÷／]/g, "/")) &&
+        !/[÷/=]/.test(compact);
+      return !!(pendingAnswer || parseProblem(text) || knowledgeReply(text));
+    }
+
     async function send(text) {
       const t = String(text || "").trim();
       if (!t || busy) return;
       busy = true;
       addMsg("me", t);
       talkEl.value = "";
-      const wait = addMsg("bot", "正在连接免登录大模型…");
+      const exactMathReply = needsExactMathReply(t);
+      const wait = addMsg("bot", exactMathReply ? "正在精确核算…" : "正在连接免登录大模型…");
       const local = reply(t);
+      if (exactMathReply) {
+        wait.textContent = local;
+        wait.parentNode.querySelector(".who").textContent = "学伴 · 精确核算";
+        history.push({ role: "user", content: t });
+        history.push({ role: "assistant", content: local });
+        setStatus("题目、判断和正确答案已由数学规则精确核算，大模型不会改写数字。");
+        busy = false;
+        talkEl.focus();
+        chatEl.scrollTop = chatEl.scrollHeight;
+        return;
+      }
       try {
         const modelText = await askModel(t, local);
         wait.textContent = modelText;
@@ -453,7 +473,7 @@
     }
 
     addMsg("bot", HELLO);
-    setStatus("不用登录。点下面的示例，等几秒应出现「学伴 · 大模型」。");
+    setStatus("数学题走精确核算；其他表达由免登录大模型处理。");
     document.getElementById("sendBtn").addEventListener("click", () => send(talkEl.value));
     talkEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(talkEl.value); });
     document.querySelectorAll(".chip").forEach((btn) => {
