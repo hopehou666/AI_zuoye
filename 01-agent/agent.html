@@ -125,7 +125,7 @@
 - 如果消息中附有“本地规则核对过的可靠结果”，必须以该结果为准。
 - 不得改动已核对的题目、学生答案、正确答案、对错判断和算理。
 - 不得为了让表达更自然而编造新的数字、步骤或知识点。
-- 结合最近对话理解学生追问，但不能偏离“六年级数学·分数除法”。
+- 只回答学生当前这条消息，不沿用上一题的题目和答案。
 - 始终使用简体中文，不输出程序代码、接口信息或与学习无关的内容。`;
 
     const BANK = [
@@ -297,6 +297,15 @@
 
     function knowledgeReply(text) {
       const t = text.replace(/\s+/g, "");
+      if (/你能(解决|回答|帮助|做)|能帮我|会什么|能做什么|什么问题|怎么使用|如何使用|使用说明|帮助/.test(t)) {
+        return "我只帮助你学习六年级数学的「分数除法」。\n\n我能做三件事：\n1. 讲知识点，例如「为什么除以一个数要乘它的倒数？」\n2. 批改分数除法题，例如「4/7 ÷ 3，我写 12/7」。\n3. 根据错因判断掌握程度，并给出订正步骤和巩固题。\n\n把一道分数除法题和你的答案发给我吧。";
+      }
+      if (/^(你好|您好|嗨|在吗)[呀啊吗！!。？?]*$/.test(t)) {
+        return "你好！我是分数除法习题学伴。你可以问我分数除法的知识点，也可以把题目和你的答案发给我批改。";
+      }
+      if (/^(谢谢|明白了|知道了|好的)[呀啊啦！!。]*$/.test(t)) {
+        return "不客气！还可以把一道分数除法题和你的答案发给我，我帮你检查。";
+      }
       if (/加减|通分|小数乘法|应用题/.test(t) && !/除法|倒数/.test(t)) {
         return "这不是本学伴的范围。我只讲六年级数学的「分数除法」。你可以问：分数除以整数怎么算？也可以把分数除法题目和答案发给我批改。";
       }
@@ -387,7 +396,6 @@
     }
 
     async function askLlm7(userText, local, model) {
-      const recentHistory = history.slice(-6);
       const res = await withTimeout(fetch("https://api.llm7.io/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -398,7 +406,6 @@
           model: model,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            ...recentHistory,
             {
               role: "user",
               content: "学生说：" + userText +
