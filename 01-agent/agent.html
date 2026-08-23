@@ -72,7 +72,7 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题 学伴智能体</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。不会弹出登录窗口。能连上免费接口就用大模型，连不上就本地批改。</p>
+    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。本页已换成免登录大模型，不会弹出登录窗口。连不上时才用本地批改。</p>
 
     <section class="panel">
       <div class="chat" id="chat"></div>
@@ -81,7 +81,7 @@
         <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
         <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
-      <p class="desc" id="llmStatus" style="margin:10px 0 0;">不用注册、不用登录。发送后先试免费接口，失败就本地批改。</p>
+      <p class="desc" id="llmStatus" style="margin:10px 0 0;">不用注册、不用登录。发送后先连免费大模型，失败就本地批改。</p>
       <div class="composer">
         <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
         <button type="button" class="btn" id="sendBtn">发送</button>
@@ -119,7 +119,14 @@
 先自己把题算对，再按固定结构输出：题目、学生答案、正确答案、判断、知识点、算理、掌握程度、掌握分析、计算过程、订正引导、巩固一下。算理必须结合本题数字讲「为什么这样算」。
 
 ## 三、风格
-像六年级数学老师：鼓励、短句、把话说明白。问知识点时不套批改模板。批改时必须出现正确答案和判断。`;
+像六年级数学老师：鼓励、短句、把话说明白。问知识点时不套批改模板。批改时必须出现正确答案和判断。
+
+## 四、准确性约束
+- 如果消息中附有“本地规则核对过的可靠结果”，必须以该结果为准。
+- 不得改动已核对的题目、学生答案、正确答案、对错判断和算理。
+- 不得为了让表达更自然而编造新的数字、步骤或知识点。
+- 结合最近对话理解学生追问，但不能偏离“六年级数学·分数除法”。
+- 始终使用简体中文，不输出程序代码、接口信息或与学习无关的内容。`;
 
     const BANK = [
       { key: "3/5 ÷ 2/5", guide: ["找到除数 2/5。", "改成乘 5/2。", "约分得最简分数。"], drills: ["3/4 ÷ 1/2", "5/6 ÷ 2/3"] },
@@ -376,38 +383,46 @@
     }
 
     function looksLikeError(text) {
-      return /402|Payment Required|error|unauthorized|API key/i.test(text || "");
+      return /402 Payment Required|unauthorized|invalid api key/i.test(text || "");
     }
 
-    async function askModel(userText, local) {
-      const prompt = (
-        "你是六年级分数除法学伴。必须用简体中文回答。学生说：" + userText +
-        "\n下面是本地已经算好的内容，对错和正确答案不要改：\n" + local
-      ).slice(0, 1400);
-      const url = "https://text.pollinations.ai/" + encodeURIComponent(prompt) + "?model=openai";
-      const getRes = await withTimeout(fetch(url), 12000);
-      if (getRes.ok) {
-        const text = (await getRes.text()).trim();
-        if (text && !looksLikeError(text)) return text;
-      }
-      const postRes = await withTimeout(fetch("https://text.pollinations.ai/openai", {
+    async function askLlm7(userText, local, model) {
+      const recentHistory = history.slice(-6);
+      const res = await withTimeout(fetch("https://api.llm7.io/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer unused"
+        },
         body: JSON.stringify({
-          model: "openai",
+          model: model,
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: "学生：" + userText + "\n本地结果：\n" + local }
+            ...recentHistory,
+            {
+              role: "user",
+              content: "学生说：" + userText +
+                "\n\n下面是本地规则核对过的可靠结果。必须以它为准，不得更改题目、判断、正确答案和算理：" +
+                "\n" + local
+            }
           ]
         })
-      }), 12000);
-      if (!postRes.ok) throw new Error("http");
-      const data = await postRes.json();
+      }), model === "fast" ? 25000 : 35000);
+      if (!res.ok) throw new Error("http " + res.status);
+      const data = await res.json();
       const text = llmText(data.choices && data.choices[0] && data.choices[0].message
         ? data.choices[0].message.content
         : data);
       if (!text || looksLikeError(text)) throw new Error("empty");
       return text;
+    }
+
+    async function askModel(userText, local) {
+      try {
+        return await askLlm7(userText, local, "fast");
+      } catch (_) {
+        return askLlm7(userText, local, "default");
+      }
     }
 
     async function send(text) {
@@ -416,7 +431,7 @@
       busy = true;
       addMsg("me", t);
       talkEl.value = "";
-      const wait = addMsg("bot", "正在回答…");
+      const wait = addMsg("bot", "正在连接免登录大模型…");
       const local = reply(t);
       try {
         const modelText = await askModel(t, local);
@@ -424,13 +439,13 @@
         wait.parentNode.querySelector(".who").textContent = "学伴 · 大模型";
         history.push({ role: "user", content: t });
         history.push({ role: "assistant", content: modelText });
-        setStatus("已接通免费大模型。");
+        setStatus("已接通免登录大模型。");
       } catch (_) {
         wait.textContent = local;
         wait.parentNode.querySelector(".who").textContent = "学伴 · 本地规则";
         history.push({ role: "user", content: t });
         history.push({ role: "assistant", content: local });
-        setStatus("免费接口没连上，这次用本地规则回答，不用登录。");
+        setStatus("大模型这次没连上，已用本地规则回答。请稍后再试，不用登录。");
       }
       busy = false;
       talkEl.focus();
@@ -438,7 +453,7 @@
     }
 
     addMsg("bot", HELLO);
-    setStatus("不用登录。能连上免费接口就用大模型，连不上就本地批改。");
+    setStatus("不用登录。点下面的示例，等几秒应出现「学伴 · 大模型」。");
     document.getElementById("sendBtn").addEventListener("click", () => send(talkEl.value));
     talkEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(talkEl.value); });
     document.querySelectorAll(".chip").forEach((btn) => {
