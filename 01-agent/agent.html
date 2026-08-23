@@ -62,10 +62,13 @@
     .report { white-space: pre-wrap; line-height: 1.75; }
     .hidden { display: none !important; }
     label.field { display: block; color: var(--muted); font-size: .82rem; margin: 10px 0 6px; }
-    textarea {
-      width: 100%; min-height: 64px; border: 1.5px solid var(--line); border-radius: 12px;
-      padding: 10px; font: inherit; resize: vertical; background: #fff;
+    textarea, input.line {
+      width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
+      padding: 10px; font: inherit; background: #fff; color: var(--ink);
     }
+    textarea { min-height: 56px; resize: vertical; }
+    .expr { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .expr input.line { flex: 1; }
   </style>
 </head>
 <body>
@@ -83,8 +86,13 @@
         <input id="file" type="file" accept="image/*" capture="environment" />
         <img id="preview" class="preview hidden" alt="习题照片" />
       </label>
-      <p class="status" id="ocrStatus">上传后将自动批改分数除法习题。</p>
-      <label class="field" for="ocrText">识别文字（一般不用改）</label>
+      <p class="status" id="ocrStatus">上传后将自动批改。手写认不清时，把算式打在下面一行即可。</p>
+      <label class="field" for="exprLine">算式（手写认不清时补这一行）</label>
+      <div class="expr">
+        <input class="line" id="exprLine" type="text" placeholder="例如：4/7 ÷ 3 = 12/7" />
+        <button type="button" class="btn" id="exprBtn">批改</button>
+      </div>
+      <label class="field" for="ocrText">识别文字</label>
       <textarea id="ocrText" placeholder="识别结果"></textarea>
     </section>
 
@@ -139,7 +147,53 @@
       return norm(s).replace(/[^\u4e00-\u9fa50-9a-z:/*+-]/g, " ").split(/\s+/).filter((w) => w.length >= 1);
     }
 
+    function gcd(a, b) {
+      a = Math.abs(a); b = Math.abs(b);
+      while (b) { const t = a % b; a = b; b = t; }
+      return a || 1;
+    }
+
+    function simp(n, d) {
+      if (!d) return "";
+      const g = gcd(n, d);
+      n /= g; d /= g;
+      if (d < 0) { n = -n; d = -d; }
+      return d === 1 ? String(n) : n + "/" + d;
+    }
+
+    function parseFrac(s) {
+      const m = String(s || "").trim().match(/^(-?\d+)(?:\/(-?\d+))?$/);
+      if (!m) return null;
+      return { n: +m[1], d: m[2] ? +m[2] : 1 };
+    }
+
+    function parseDivEq(text) {
+      const t = String(text || "").replace(/\s+/g, "").replace(/[÷:／]/g, "÷").replace(/＝/g, "=");
+      const m = t.match(/(-?\d+(?:\/-?\d+)?)÷(-?\d+(?:\/-?\d+)?)(?:=(-?\d+(?:\/-?\d+)?))?/);
+      if (!m) return null;
+      const left = parseFrac(m[1]);
+      const right = parseFrac(m[2]);
+      if (!left || !right || !right.n) return null;
+      const q = `计算：${simp(left.n, left.d)} ÷ ${simp(right.n, right.d)} = ？`;
+      const answer = simp(left.n * right.d, left.d * right.n);
+      const stu = m[3] || "";
+      const hit = BANK.find((x) => x.q.includes(`${simp(left.n, left.d)} ÷ ${simp(right.n, right.d)}`));
+      const item = hit || {
+        q,
+        answer,
+        aliases: [answer],
+        kp: "分数除法",
+        cause: "方法选择",
+        tip: "除以一个数等于乘它的倒数。分数÷整数，要把整数写成倒数再乘。",
+        guide: ["找出除数。", "写成乘除数的倒数。", "约分成最简分数。"],
+        drills: ["2/5 ÷ 3", "5/8 ÷ 4"]
+      };
+      if (!hit) item.answer = answer;
+      return { item, stu };
+    }
+
     function matchBank(text) {
+      if (!/\d/.test(text || "")) return null;
       const pool = BANK;
       const tks = tokens(text);
       let best = null, bestScore = 0;
@@ -219,17 +273,16 @@
     let ocrWorker = null;
     let ocrReady = false;
 
-    function compressImage(file) {
+    function preprocessImage(file) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
-          const max = 900;
           let w = img.width;
           let h = img.height;
-          if (w > max) {
-            h = Math.round(h * max / w);
-            w = max;
-          }
+          const minSide = 1400;
+          const scale = Math.max(minSide / Math.min(w, h), 1);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
           const canvas = document.createElement("canvas");
           canvas.width = w;
           canvas.height = h;
@@ -237,7 +290,15 @@
           ctx.fillStyle = "#fff";
           ctx.fillRect(0, 0, w, h);
           ctx.drawImage(img, 0, 0, w, h);
-          canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("compress")), "image/jpeg", 0.7);
+          const data = ctx.getImageData(0, 0, w, h);
+          const p = data.data;
+          for (let i = 0; i < p.length; i += 4) {
+            const g = 0.3 * p[i] + 0.59 * p[i + 1] + 0.11 * p[i + 2];
+            const v = g < 150 ? 0 : 255;
+            p[i] = p[i + 1] = p[i + 2] = v;
+          }
+          ctx.putImageData(data, 0, 0);
+          canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("prep")), "image/png");
         };
         img.onerror = () => reject(new Error("img"));
         img.src = URL.createObjectURL(file);
@@ -250,6 +311,10 @@
       if (!ocrWorker) {
         el.ocrStatus.textContent = "正在启动识别…";
         ocrWorker = await window.Tesseract.createWorker("eng");
+        await ocrWorker.setParameters({
+          tessedit_char_whitelist: "0123456789/=-+. ",
+          tessedit_pageseg_mode: "6"
+        });
         ocrReady = true;
       }
       return ocrWorker;
@@ -269,41 +334,38 @@
     async function gradePhoto(file) {
       el.preview.src = URL.createObjectURL(file);
       el.preview.classList.remove("hidden");
-      el.ocrStatus.textContent = "正在压缩并识别…";
+      el.resultPanel.classList.add("hidden");
+      el.ocrStatus.textContent = "正在识别算式…";
       try {
-        const small = await compressImage(file);
+        const prepared = await preprocessImage(file);
         const worker = await ensureOcr();
-        const { data } = await worker.recognize(small);
+        const { data } = await worker.recognize(prepared);
         const text = (data && data.text ? data.text : "").replace(/\n{2,}/g, "\n").trim();
         el.ocrText.value = text;
-        if (!text) {
-          el.ocrStatus.textContent = "没有识别到算式，请再拍清楚一些，或把算式打进识别框。";
+        if (!/\d/.test(text)) {
+          el.ocrStatus.textContent = "手写分数不太好认。请在上面一行补全算式，例如 4/7 ÷ 3 = 12/7，再点「批改」。";
+          document.getElementById("exprLine").focus();
           return;
         }
         autoGrade(text);
       } catch (_) {
-        el.ocrStatus.textContent = "识别没有成功。可把算式打进识别框后点框外，会自动再批改。";
+        el.ocrStatus.textContent = "识别没有成功。请在上面一行写出算式后点「批改」。";
+        document.getElementById("exprLine").focus();
       }
-    }
-
-    function matchByExpr(text) {
-      const t = String(text || "").replace(/\s+/g, "").replace(/[÷:]/g, "÷");
-      const m = t.match(/(\d+)\/(\d+)÷(\d+)/) || t.match(/(\d+)\/(\d+)\/(\d+)/);
-      if (!m) return null;
-      const key = `${m[1]}/${m[2]} ÷ ${m[3]}`;
-      return BANK.find((x) => x.q.includes(key)) || null;
     }
 
     function autoGrade(text) {
-      const item = matchBank(text) || matchByExpr(text);
+      const parsed = parseDivEq(text);
+      const item = parsed ? parsed.item : matchBank(text);
+      const stu = parsed ? parsed.stu : (item ? extractAns(text, item) : "");
       if (!item) {
-        el.ocrStatus.textContent = "文字已识别，但还没对上分数除法习题。可改几个字后再点识别框外面。";
-        showResult(null, "", false);
+        el.ocrStatus.textContent = "还没读成分数除法算式。请写成 4/7 ÷ 3 = 12/7 这样，再点「批改」。";
+        el.resultPanel.classList.add("hidden");
         return;
       }
-      const ans = extractAns(text, item);
+      const ans = stu || extractAns(text, item);
       const ok = sameAns(ans, item);
-      el.ocrStatus.textContent = "已自动批改。";
+      el.ocrStatus.textContent = "已批改。";
       showResult(item, ans, ok);
     }
 
@@ -312,15 +374,31 @@
       if (file) gradePhoto(file);
     });
 
+    function gradeFromLine() {
+      const line = document.getElementById("exprLine").value.trim();
+      const text = line || el.ocrText.value.trim();
+      if (!text) {
+        alert("请先拍照，或写出算式，例如 4/7 ÷ 3 = 12/7");
+        return;
+      }
+      autoGrade(text);
+    }
+
+    document.getElementById("exprBtn").addEventListener("click", gradeFromLine);
+    document.getElementById("exprLine").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") gradeFromLine();
+    });
+
     el.ocrText.addEventListener("change", () => {
       const text = el.ocrText.value.trim();
-      if (text.length > 4) autoGrade(text);
+      if (/\d/.test(text) && text.length > 3) autoGrade(text);
     });
 
     document.getElementById("againBtn").addEventListener("click", () => {
       el.resultPanel.classList.add("hidden");
       el.ocrText.value = "";
-      el.ocrStatus.textContent = "识别已就绪，可以直接再拍一张。";
+      document.getElementById("exprLine").value = "";
+      el.ocrStatus.textContent = "识别已就绪，可以直接再拍一张。手写不清时写出算式即可。";
       el.preview.classList.add("hidden");
       document.getElementById("file").value = "";
     });
