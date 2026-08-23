@@ -55,10 +55,15 @@
       width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
       padding: 10px; font: inherit; background: #fff; color: var(--ink);
     }
-    .grid { display: grid; gap: 12px; }
-    @media (min-width: 560px) {
-      .grid.two { grid-template-columns: 1.2fr .8fr; }
+    .eq {
+      display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;
     }
+    .eq .cell { flex: 1 1 120px; min-width: 96px; }
+    .eq .op {
+      flex: 0 0 auto; font-size: 1.6rem; font-weight: 700; color: var(--accent-deep);
+      line-height: 1; padding-bottom: 10px;
+    }
+    .eq input.line { text-align: center; font-size: 1.15rem; }
     .actions { display: flex; gap: 8px; margin-top: 14px; }
   </style>
 </head>
@@ -67,20 +72,26 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题学伴</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">学生直接输入错题的题目和自己的答案。学伴先判断对错，再分析分数除法相关知识点掌握得怎么样。</p>
+    <p class="desc">按固定格式填写错题：被除数 ÷ 除数 = 学生答案。学伴先判断对错，再分析分数除法相关知识点掌握得怎么样。</p>
 
     <section class="panel">
       <div class="step">01 输入错题</div>
-      <h2>题目和答案都直接填</h2>
-      <p class="hint">题目可直接写 4/7/3 或 4/7 ÷ 3，学生答案直接写 4 或 12/7。做对的题也可以输入，用来确认掌握情况。</p>
-      <div class="grid two">
-        <div>
-          <label class="field" for="qLine">题目</label>
-          <input class="line" id="qLine" type="text" placeholder="例如：4/7/3" />
+      <h2>按三个框填写</h2>
+      <p class="hint">每个框只填一个数。分数写成 4/7，整数写成 3。做对的题也可以填，用来确认掌握情况。</p>
+      <div class="eq">
+        <div class="cell">
+          <label class="field" for="leftBox">被除数</label>
+          <input class="line" id="leftBox" type="text" inputmode="text" placeholder="4/7" />
         </div>
-        <div>
-          <label class="field" for="aLine">学生答案</label>
-          <input class="line" id="aLine" type="text" placeholder="例如：4" />
+        <div class="op" aria-hidden="true">÷</div>
+        <div class="cell">
+          <label class="field" for="rightBox">除数</label>
+          <input class="line" id="rightBox" type="text" inputmode="text" placeholder="3" />
+        </div>
+        <div class="op" aria-hidden="true">=</div>
+        <div class="cell">
+          <label class="field" for="ansBox">学生答案</label>
+          <input class="line" id="ansBox" type="text" inputmode="text" placeholder="12/7" />
         </div>
       </div>
       <div class="actions">
@@ -109,8 +120,9 @@
     ];
 
     const el = {
-      qLine: document.getElementById("qLine"),
-      aLine: document.getElementById("aLine"),
+      leftBox: document.getElementById("leftBox"),
+      rightBox: document.getElementById("rightBox"),
+      ansBox: document.getElementById("ansBox"),
       resultPanel: document.getElementById("resultPanel"),
       verdict: document.getElementById("verdict"),
       report: document.getElementById("report")
@@ -153,25 +165,8 @@
       return a.n * b.d === b.n * a.d;
     }
 
-    function cleanExpr(s) {
-      return String(s || "")
-        .replace(/\s+/g, "")
-        .replace(/[：]/g, ":")
-        .replace(/[＝]/g, "=")
-        .replace(/[÷:／]/g, "÷");
-    }
-
-    function splitOperands(q) {
-      if (q.includes("÷")) {
-        const parts = q.split("÷").filter(Boolean);
-        if (parts.length !== 2) return null;
-        return parts;
-      }
-      const bits = q.split("/").filter((x) => /^-?\d+$/.test(x));
-      if (bits.length === 2) return [bits[0], bits[1]];
-      if (bits.length === 3) return [bits[0] + "/" + bits[1], bits[2]];
-      if (bits.length === 4) return [bits[0] + "/" + bits[1], bits[2] + "/" + bits[3]];
-      return null;
+    function boxText(s) {
+      return String(s || "").replace(/\s+/g, "").replace(/[÷／]/g, "/");
     }
 
     function describeKp(left, right) {
@@ -267,19 +262,10 @@
       };
     }
 
-    function parseInput(qText, aText) {
-      let q = cleanExpr(qText);
-      let stuRaw = String(aText || "").replace(/\s+/g, "");
-      if (q.includes("=") && !stuRaw) {
-        const parts = q.split("=");
-        q = parts[0];
-        stuRaw = parts.slice(1).join("=");
-      }
-      q = q.replace(/=.*$/, "");
-      const pair = splitOperands(q);
-      if (!pair) return null;
-      const left = parseFrac(pair[0]);
-      const right = parseFrac(pair[1]);
+    function parseInput(leftText, rightText, ansText) {
+      const left = parseFrac(boxText(leftText));
+      const right = parseFrac(boxText(rightText));
+      const stuRaw = boxText(ansText);
       if (!left || !right || !right.n) return null;
       const leftShow = showFrac(left);
       const rightShow = showFrac(right);
@@ -341,16 +327,14 @@
     }
 
     function grade() {
-      const parsed = parseInput(el.qLine.value, el.aLine.value);
+      const parsed = parseInput(el.leftBox.value, el.rightBox.value, el.ansBox.value);
       if (!parsed) {
         el.resultPanel.classList.remove("hidden");
         el.verdict.className = "verdict mid";
-        el.verdict.textContent = "请直接填写错题。题目例如 4/7/3，学生答案例如 4。";
+        el.verdict.textContent = "请按三个框填写。例如 4/7  ÷  3  =  12/7。";
         el.report.textContent = "";
         return;
       }
-      if (!el.aLine.value.trim() && parsed.stuShow) el.aLine.value = parsed.stuShow;
-      if (el.qLine.value.includes("=")) el.qLine.value = parsed.qShow;
       el.resultPanel.classList.remove("hidden");
       if (!parsed.stuShow) {
         el.verdict.className = "verdict mid";
@@ -367,15 +351,16 @@
     }
 
     function clearAll() {
-      el.qLine.value = "";
-      el.aLine.value = "";
+      el.leftBox.value = "";
+      el.rightBox.value = "";
+      el.ansBox.value = "";
       el.resultPanel.classList.add("hidden");
-      el.qLine.focus();
+      el.leftBox.focus();
     }
 
     document.getElementById("gradeBtn").addEventListener("click", grade);
     document.getElementById("clearBtn").addEventListener("click", clearAll);
-    [el.qLine, el.aLine].forEach((box) => {
+    [el.leftBox, el.rightBox, el.ansBox].forEach((box) => {
       box.addEventListener("keydown", (e) => {
         if (e.key === "Enter") grade();
       });
