@@ -174,6 +174,25 @@
       return null;
     }
 
+    function describeKp(left, right) {
+      if (left.d !== 1 && right.d === 1) {
+        return {
+          name: "分数除法（分数÷整数）",
+          text: "本题练的是「分数除以整数」。方法：除以一个整数，等于乘这个整数的倒数。先把整数写成 1/整数，再和前面的分数相乘，最后约成最简分数。不要把整数直接乘到分子上。"
+        };
+      }
+      if (left.d === 1 && right.d !== 1) {
+        return {
+          name: "分数除法（整数÷分数）",
+          text: "本题练的是「整数除以分数」。方法：整数乘除数的倒数。先把分数的分子、分母对调，再和整数相乘，能约分先约分。"
+        };
+      }
+      return {
+        name: "分数除法（分数÷分数）",
+        text: "本题练的是「分数除以分数」。方法：除以一个分数，等于乘它的倒数。先把除数的分子、分母对调，再和被除数相乘，能约分先约分。"
+      };
+    }
+
     function diagnose(p) {
       const L = parseFrac(p.leftShow);
       const R = parseFrac(p.rightShow);
@@ -194,15 +213,16 @@
         };
       }
       const mul = { n: L.n * R.n, d: L.d * R.d };
+      const mulNum = { n: L.n * R.n, d: 1 };
       const flipAns = { n: ans.d, d: ans.n };
       const onlyNum = { n: L.n, d: 1 };
       const subDen = R.d === 1 ? { n: L.d - R.n, d: 1 } : null;
       const keepLeft = L;
-      if (sameFrac(S, mul)) {
+      if (sameFrac(S, mul) || sameFrac(S, mulNum)) {
         return {
           level: "方法掌握不牢",
           cause: "方法选择",
-          detail: "学生把「除以」做成了「乘」，没有把除数写成倒数。分数除法的核心是：除以一个数 = 乘它的倒数。"
+          detail: "学生把整数乘到了分子上，没有把除数写成倒数。分数除法的核心是：除以一个数 = 乘它的倒数。"
         };
       }
       if (subDen && sameFrac(S, onlyNum) && sameFrac(S, subDen)) {
@@ -281,6 +301,7 @@
         stuShow: stuRaw ? (stu ? showFrac(stu) : stuRaw) : "",
         stu,
         ok: !!(stu && sameFrac(stu, parseFrac(answer))),
+        kp: describeKp(left, right),
         tip: tip.tip,
         guide: tip.guide,
         drills: tip.drills
@@ -297,7 +318,8 @@
         "【正确答案】" + p.answer,
         "【判断】学生答案" + judge,
         "",
-        "【知识点】分数除法",
+        "【知识点】" + p.kp.name,
+        "【知识点说明】" + p.kp.text,
         "【掌握程度】" + p.diag.level + "（可能原因：" + p.diag.cause + "）",
         "【掌握分析】" + p.diag.detail,
         "",
