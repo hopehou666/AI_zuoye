@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
-  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --ink: #1a2b3c; --muted: #5a6b7c; --bg: #eef4f1; --panel: #fffdf8;
@@ -72,7 +71,7 @@
     <a class="home-link" href="../index.html">← 返回导航</a>
     <div class="brand"><i></i>分数除法习题 学伴智能体</div>
     <span class="tag">六年级数学 · 分数除法</span>
-    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。学伴会调用免费大模型来回答；连不上时自动用本地规则批改。</p>
+    <p class="desc">可以问分数除法知识点，也可以输入题目和学生答案。不用登录。能连上免费接口就用大模型回答，连不上就本地批改。</p>
 
     <section class="panel">
       <div class="chat" id="chat"></div>
@@ -81,7 +80,7 @@
         <button type="button" class="chip" data-q="4/7 ÷ 3，我写 12/7">批改：4/7 ÷ 3，我写 12/7</button>
         <button type="button" class="chip" data-q="3/4 ÷ 1/2，我写 3/2">批改：3/4 ÷ 1/2，我写 3/2</button>
       </div>
-      <p class="desc" id="llmStatus" style="margin:10px 0 0;">正在准备免费大模型…</p>
+      <p class="desc" id="llmStatus" style="margin:10px 0 0;">发送后会先试免费接口，不用登录。</p>
       <div class="composer">
         <input id="talk" type="text" placeholder="问知识点，或输入题目和你的答案" />
         <button type="button" class="btn" id="sendBtn">发送</button>
@@ -375,22 +374,38 @@
       ]);
     }
 
+    function looksLikeError(text) {
+      return /402|Payment Required|error|unauthorized|API key/i.test(text || "");
+    }
+
     async function askModel(userText, local) {
-      if (!window.puter || !puter.ai || !puter.ai.chat) throw new Error("no-puter");
-      const extra = local
-        ? "\n\n【本地已经算好，数字必须用这份，不要改对错和正确答案】\n" + local
-        : "";
-      const messages = [{ role: "system", content: SYSTEM_PROMPT + extra }]
-        .concat(history.slice(-6))
-        .concat([{ role: "user", content: userText }]);
-      let raw;
-      try {
-        raw = await withTimeout(puter.ai.chat(messages, { model: "gpt-4o-mini" }), 16000);
-      } catch (_) {
-        raw = await withTimeout(puter.ai.chat(messages), 16000);
+      const prompt = (
+        "你是六年级分数除法学伴。必须用简体中文回答。学生说：" + userText +
+        "\n下面是本地已经算好的内容，对错和正确答案不要改：\n" + local
+      ).slice(0, 1400);
+      const url = "https://text.pollinations.ai/" + encodeURIComponent(prompt) + "?model=openai";
+      const getRes = await withTimeout(fetch(url), 12000);
+      if (getRes.ok) {
+        const text = (await getRes.text()).trim();
+        if (text && !looksLikeError(text)) return text;
       }
-      const text = llmText(raw);
-      if (!text) throw new Error("empty");
+      const postRes = await withTimeout(fetch("https://text.pollinations.ai/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: "学生：" + userText + "\n本地结果：\n" + local }
+          ]
+        })
+      }), 12000);
+      if (!postRes.ok) throw new Error("http");
+      const data = await postRes.json();
+      const text = llmText(data.choices && data.choices[0] && data.choices[0].message
+        ? data.choices[0].message.content
+        : data);
+      if (!text || looksLikeError(text)) throw new Error("empty");
       return text;
     }
 
@@ -400,7 +415,7 @@
       busy = true;
       addMsg("me", t);
       talkEl.value = "";
-      const wait = addMsg("bot", "正在调用免费大模型…");
+      const wait = addMsg("bot", "正在回答…");
       const local = reply(t);
       try {
         const modelText = await askModel(t, local);
@@ -414,7 +429,7 @@
         wait.parentNode.querySelector(".who").textContent = "学伴 · 本地规则";
         history.push({ role: "user", content: t });
         history.push({ role: "assistant", content: local });
-        setStatus("免费大模型没连上（可能要登录 Puter 或网络不通），这次是本地规则在回答。");
+        setStatus("免费接口没连上，这次用本地规则回答，不用登录。");
       }
       busy = false;
       talkEl.focus();
@@ -422,8 +437,7 @@
     }
 
     addMsg("bot", HELLO);
-    if (window.puter && puter.ai) setStatus("免费大模型已就绪，发送后会先问模型。");
-    else setStatus("正在载入免费大模型。载入失败时仍可用本地规则批改。");
+    setStatus("不用登录。能连上免费接口就用大模型，连不上就本地批改。");
     document.getElementById("sendBtn").addEventListener("click", () => send(talkEl.value));
     talkEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(talkEl.value); });
     document.querySelectorAll(".chip").forEach((btn) => {
